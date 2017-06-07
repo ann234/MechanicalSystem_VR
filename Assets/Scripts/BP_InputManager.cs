@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using Assets.Scripts.UI;
+
 public class BP_InputManager : MonoBehaviour {
 
     public enum EditMode
@@ -96,26 +98,39 @@ public class BP_InputManager : MonoBehaviour {
                             }
                             m_isLinkingStart = !m_isLinkingStart;
                         }
+                        else
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
                         break;
                     case EditMode.Link:
+                        if (hitObj.GetComponent<BP_Gear>())
+                        {
+                        }
+                        else
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
                         break;
                     case EditMode.None:
-                        if (hitObj.GetComponent<Blueprint>())
+                        if (hitObj.GetComponent(typeof(IButton)))
                         {
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
+                            print("success?");
                             //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         }
-                        else if (hitObj.GetComponent<BP_Gear>())
-                        {
-                            hitObj.GetComponent<BP_Gear>().getInput(hitPoint);
-                        }
-                        else if (hitObj.GetComponent<BP_GearBtn>())
-                        {
+                        //else if (hitObj.GetComponent<BP_Gear>())
+                        //{
+                        //    hitObj.GetComponent<BP_Gear>().getInput(hitPoint);
+                        //}
+                        //else if (hitObj.GetComponent<BP_GearBtn>())
+                        //{
 
-                        }
-                        else if (hitObj.GetComponent<BP_AddGear>())
-                        {
-                            hitObj.GetComponent<BP_AddGear>().getInput(hitPoint);
-                        }
+                        //}
+                        //else if (hitObj.GetComponent<BP_AddGear>())
+                        //{
+                        //    hitObj.GetComponent<BP_AddGear>().getInput(hitPoint);
+                        //}
+                        //else if (hitObj.GetComponent<BP_AddGear>())
+                        //{
+                        //    hitObj.GetComponent<BP_AddGear>().getInput(hitPoint);
+                        //}
                         break;
                 }
             }
@@ -135,10 +150,6 @@ public class BP_InputManager : MonoBehaviour {
                 if (hit.collider.GetComponent<Blueprint>())
                 {
                     //GameObject.FindObjectOfType<Blueprint>().getInput(hitPoint);
-                }
-                else if (hit.collider.GetComponent<BP_GearBtn>())
-                {
-                    GameObject.FindObjectOfType<BP_GearBtn>().getInput(hitPoint);
                 }
             }
 

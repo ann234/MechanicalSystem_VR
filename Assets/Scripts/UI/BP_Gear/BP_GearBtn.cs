@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BP_GearBtn : MonoBehaviour {
+using Assets.Scripts.UI;
+
+public class BP_GearBtn : MonoBehaviour, IButton {
 
     //  ItemOption UI 게임오브젝트
     private ItemOption m_itemOption;

@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Runtime.CompilerServices;
 
-public class BP_AddGear : MonoBehaviour
+using Assets.Scripts.UI;
+
+public class BP_AddGear : MonoBehaviour, IButton
 {
     [SerializeField]
     private GameObject m_Blueprint;

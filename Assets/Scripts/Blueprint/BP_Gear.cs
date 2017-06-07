@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BP_Gear : MonoBehaviour {
+using Assets.Scripts.UI;
+
+public class BP_Gear : MonoBehaviour, IButton {
 
     private float m_radius;
     public float m_Radius
