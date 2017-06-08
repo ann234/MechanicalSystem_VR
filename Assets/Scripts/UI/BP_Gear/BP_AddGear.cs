@@ -25,7 +25,17 @@ public class BP_AddGear : MonoBehaviour, IButton
 
     }
 
-    public void getInput(Vector3 hitPoint)
+    public void getMotion(Vector3 rayDir, Transform camera)
+    {
+
+    }
+
+    public void getUpInput(Vector3 hitPoint)
+    {
+
+    }
+
+    public void getDownInput(Vector3 hitPoint)
     {
         if(m_Blueprint != null)
         {

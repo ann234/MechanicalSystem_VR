@@ -6,7 +6,17 @@ using Assets.Scripts.UI;
 
 public class BP_GearModeBtn : MonoBehaviour, IButton {
 
-    public void getInput(Vector3 hitPoint)
+    public void getMotion(Vector3 rayDir, Transform camera)
+    {
+
+    }
+
+    public void getUpInput(Vector3 hitPoint)
+    {
+
+    }
+
+    public void getDownInput(Vector3 hitPoint)
     {
         BP_InputManager im = FindObjectOfType<BP_InputManager>();
         if (im)

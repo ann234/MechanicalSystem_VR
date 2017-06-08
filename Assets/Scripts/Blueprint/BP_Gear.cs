@@ -24,12 +24,23 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
     }
     public List<BP_Gear> m_linkedGearList = new List<BP_Gear>();
+    //  문제점
+    //  기어를 제거 시 제거된 기어가 어느 부모의 자식으로 속해있었다면
+    //  부모에게 가서 마찬가지로 제거를 해주어야 함.
 
     public bool m_switch = false;
 
+    //  Menu UI prefab
+    private ItemOption m_itemOption;
+
+    //  Menu UI가 열렸나 안열렸나
+    private bool m_isMenuOpen = false;
+
     // Use this for initialization
     void Start () {
-        
+        //  가지고 있는 ItemOption UI 게임오브젝트 저장
+        m_itemOption = this.GetComponentInChildren<ItemOption>();
+        m_itemOption.gameObject.SetActive(false);
     }
 	
 	// Update is called once per frame
@@ -60,9 +71,29 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
     }
 
-    public void getInput(Vector3 hitPoint)
+    public void getDownInput(Vector3 hitPoint)
     {
 
+    }
+
+    public void getUpInput(Vector3 hitPoint)
+    {
+        if(m_itemOption == null)
+        {
+            print("BP_Gear: m_itemOpion을 찾을 수 없습니다.");
+            return;
+        }
+
+        m_isMenuOpen = !m_isMenuOpen;
+
+        if (m_isMenuOpen)
+        {
+            m_itemOption.gameObject.SetActive(true);
+        }
+        else
+        {
+            m_itemOption.gameObject.SetActive(false);
+        }
     }
 
     public void getMotion(Vector3 rayDir, Transform camera)
@@ -92,6 +123,7 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
 
         gear.m_linkedGearList.Add(this);
+        gear.m_switch = true;
         print("BP_Gear: Link successfully");
     }
 }

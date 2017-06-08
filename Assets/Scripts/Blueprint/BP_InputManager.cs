@@ -28,6 +28,8 @@ public class BP_InputManager : MonoBehaviour {
     private bool m_isLinkingStart = false;
     private BP_Gear m_parentGear;
 
+    private IButton m_clickedObject;
+
     // Use this for initialization
     void Start()
     {
@@ -51,18 +53,9 @@ public class BP_InputManager : MonoBehaviour {
                 //  버튼을 누르고 카메라를 움직일 때 필요한 함수 호출
                 // Create a ray that points forwards from the camera.
                 Ray ray = new Ray(m_Camera.position, m_Camera.forward);
-                RaycastHit hit;
-                if (Physics.Raycast(ray, out hit))
+                if(m_clickedObject != null)
                 {
-                    Vector3 hitPoint = hit.point;
-                    if (hit.collider.GetComponent<Blueprint>())
-                    {
-                        //GameObject.FindObjectOfType<Blueprint>().getMotion(hitPoint);
-                    }
-                    else if (hit.collider.GetComponent<BP_Gear>())
-                    {
-                        hit.collider.GetComponent<BP_Gear>().getMotion(ray.direction, m_Camera);
-                    }
+                    m_clickedObject.getMotion(ray.direction, m_Camera);
                 }
             }
         }
@@ -99,38 +92,23 @@ public class BP_InputManager : MonoBehaviour {
                             m_isLinkingStart = !m_isLinkingStart;
                         }
                         else
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.Link:
                         if (hitObj.GetComponent<BP_Gear>())
                         {
                         }
                         else
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
                         {
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getInput(hitPoint);
+                            m_clickedObject = hitObj.GetComponent(typeof(IButton)) as IButton;
+                            m_clickedObject.getDownInput(hitPoint);
                             print("success?");
                             //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         }
-                        //else if (hitObj.GetComponent<BP_Gear>())
-                        //{
-                        //    hitObj.GetComponent<BP_Gear>().getInput(hitPoint);
-                        //}
-                        //else if (hitObj.GetComponent<BP_GearBtn>())
-                        //{
-
-                        //}
-                        //else if (hitObj.GetComponent<BP_AddGear>())
-                        //{
-                        //    hitObj.GetComponent<BP_AddGear>().getInput(hitPoint);
-                        //}
-                        //else if (hitObj.GetComponent<BP_AddGear>())
-                        //{
-                        //    hitObj.GetComponent<BP_AddGear>().getInput(hitPoint);
-                        //}
                         break;
                 }
             }
@@ -147,9 +125,28 @@ public class BP_InputManager : MonoBehaviour {
             if (Physics.Raycast(ray, out hit))
             {
                 Vector3 hitPoint = hit.point;
-                if (hit.collider.GetComponent<Blueprint>())
+                Collider hitObj = hit.collider;
+
+                switch (m_currMode)
                 {
-                    //GameObject.FindObjectOfType<Blueprint>().getInput(hitPoint);
+                    case EditMode.GEAR:
+                        (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                        break;
+                    case EditMode.Link:
+                        if (hitObj.GetComponent<BP_Gear>())
+                        {
+                        }
+                        else
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                        break;
+                    case EditMode.None:
+                        if (hitObj.GetComponent(typeof(IButton)))
+                        {
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                            print("success?");
+                            //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
+                        }
+                        break;
                 }
             }
 

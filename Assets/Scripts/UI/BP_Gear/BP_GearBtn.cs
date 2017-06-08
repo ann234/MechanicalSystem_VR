@@ -23,10 +23,25 @@ public class BP_GearBtn : MonoBehaviour, IButton {
 		
 	}
 
-    public void getInput(Vector3 hitPoint)
+    public void getMotion(Vector3 rayDir, Transform camera)
     {
-        m_isMenuOpen = !m_isMenuOpen;
 
+    }
+
+    public void getUpInput(Vector3 hitPoint)
+    {
+
+    }
+
+    public void getDownInput(Vector3 hitPoint)
+    {
+        if (m_itemOption == null)
+        {
+            print("BP_GearBtn: m_itemOpion을 찾을 수 없습니다.");
+            return;
+        }
+
+        m_isMenuOpen = !m_isMenuOpen;
         if (m_isMenuOpen)
         {
             m_itemOption.gameObject.SetActive(true);

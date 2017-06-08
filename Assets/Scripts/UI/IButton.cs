@@ -8,6 +8,8 @@ namespace Assets.Scripts.UI
 {
     interface IButton
     {
-        void getInput(Vector3 hitPoint);
+        void getDownInput(Vector3 hitPoint);
+        void getUpInput(Vector3 hitPoint);
+        void getMotion(Vector3 rayDir, Transform camera);
     }
 }

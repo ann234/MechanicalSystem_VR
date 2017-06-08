@@ -16,7 +16,17 @@ public class BP_RemoveGear : MonoBehaviour, IButton {
 		
 	}
 
-    public void getInput(Vector3 hitPoint)
+    public void getMotion(Vector3 rayDir, Transform camera)
+    {
+
+    }
+
+    public void getUpInput(Vector3 hitPoint)
+    {
+
+    }
+
+    public void getDownInput(Vector3 hitPoint)
     {
         GameObject parent_gear = GetComponentInParent<BP_Gear>().gameObject;
         Destroy(parent_gear);
