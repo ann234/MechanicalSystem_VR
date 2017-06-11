@@ -10,6 +10,7 @@ namespace Assets.Scripts.UI
     {
         void getDownInput(Vector3 hitPoint);
         void getUpInput(Vector3 hitPoint);
+        void getUpInput(GameObject hitObj, Vector3 hitPoint);
         void getMotion(Vector3 rayDir, Transform camera);
     }
 }

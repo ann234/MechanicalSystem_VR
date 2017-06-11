@@ -11,6 +11,11 @@ public class BP_NoneModeBtn : MonoBehaviour, IButton {
 
     }
 
+    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    {
+
+    }
+
     public void getUpInput(Vector3 hitPoint)
     {
 

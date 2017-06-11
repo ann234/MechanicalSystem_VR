@@ -50,12 +50,30 @@ public class BP_InputManager : MonoBehaviour {
             //  현재 프레임 카메라 방향과 이전 프레임의 것을 비교해 카메라의 움직임을 감지
             if (Mathf.Abs((m_Camera.forward - m_bfCamDirection).magnitude) > m_constant)
             {
-                //  버튼을 누르고 카메라를 움직일 때 필요한 함수 호출
                 // Create a ray that points forwards from the camera.
                 Ray ray = new Ray(m_Camera.position, m_Camera.forward);
-                if(m_clickedObject != null)
+                switch (m_currMode)
                 {
-                    m_clickedObject.getMotion(ray.direction, m_Camera);
+                    case EditMode.GEAR:
+                        break;
+                    case EditMode.Link:
+                        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+                        Vector3 dir = ray.direction;
+                        Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
+                            + new Vector3(0, 0, -0.2f);
+
+                        float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
+                        float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
+                        Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+
+                        FindObjectOfType<BP_LinkEditor>().getMotion(hitPoint);
+                        break;
+                    case EditMode.None:
+                        if (m_clickedObject != null)
+                        {
+                            m_clickedObject.getMotion(ray.direction, m_Camera);
+                        }
+                        break;
                 }
             }
         }
@@ -91,14 +109,16 @@ public class BP_InputManager : MonoBehaviour {
                             }
                             m_isLinkingStart = !m_isLinkingStart;
                         }
-                        else
+                        //  State change 버튼을 위해
+                        else if (hitObj.GetComponent(typeof(IButton)))
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.Link:
-                        if (hitObj.GetComponent<BP_Gear>())
+                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>())
                         {
+                            FindObjectOfType<BP_LinkEditor>().getDownInput(hitObj.gameObject, hitPoint);
                         }
-                        else
+                        else if (hitObj.GetComponent(typeof(IButton)))
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.None:
@@ -106,9 +126,10 @@ public class BP_InputManager : MonoBehaviour {
                         {
                             m_clickedObject = hitObj.GetComponent(typeof(IButton)) as IButton;
                             m_clickedObject.getDownInput(hitPoint);
-                            print("success?");
-                            //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         }
+                        //  State change 버튼을 위해
+                        else if(hitObj.GetComponent(typeof(IButton)))
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                 }
             }
@@ -135,18 +156,43 @@ public class BP_InputManager : MonoBehaviour {
                     case EditMode.Link:
                         if (hitObj.GetComponent<BP_Gear>())
                         {
+                            FindObjectOfType<BP_LinkEditor>().getUpInput(hitObj.gameObject, hitPoint);
                         }
                         else
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                            FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
                         break;
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
                         {
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitObj.gameObject, hitPoint);
                             print("success?");
                             //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         }
                         break;
+                }
+            }
+            else
+            {
+                //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+                Vector3 dir = ray.direction;
+                Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
+                    + new Vector3(0, 0, -0.01f);
+
+                float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
+                float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
+                Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+
+                //  허공에 Link의 끝을 위치시키는 경우
+                if (m_currMode == EditMode.Link)
+                {
+                    FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
+                }
+                else
+                {
+                    if (m_clickedObject != null)
+                    {
+                        m_clickedObject.getUpInput(hitPoint);
+                    }
                 }
             }
 

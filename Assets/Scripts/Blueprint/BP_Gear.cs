@@ -76,6 +76,11 @@ public class BP_Gear : MonoBehaviour, IButton {
 
     }
 
+    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    {
+
+    }
+
     public void getUpInput(Vector3 hitPoint)
     {
         if(m_itemOption == null)
