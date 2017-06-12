@@ -57,6 +57,8 @@ public class BP_InputManager : MonoBehaviour {
                     case EditMode.GEAR:
                         break;
                     case EditMode.Link:
+                        if (!FindObjectOfType<BP_LinkEditor>().m_isLinking)
+                            break;
                         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
                         Vector3 dir = ray.direction;
                         Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
@@ -119,7 +121,10 @@ public class BP_InputManager : MonoBehaviour {
                             FindObjectOfType<BP_LinkEditor>().getDownInput(hitObj.gameObject, hitPoint);
                         }
                         else if (hitObj.GetComponent(typeof(IButton)))
+                        {
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
+                            FindObjectOfType<BP_LinkEditor>().m_isLinking = false;
+                        }
                         break;
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
@@ -154,18 +159,28 @@ public class BP_InputManager : MonoBehaviour {
                         (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
                         break;
                     case EditMode.Link:
-                        if (hitObj.GetComponent<BP_Gear>())
+                        if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
                         {
-                            FindObjectOfType<BP_LinkEditor>().getUpInput(hitObj.gameObject, hitPoint);
+                            RaycastHit[] hits = Physics.RaycastAll(ray);
+
+                            foreach(RaycastHit eachHit in hits)
+                            {
+                                Vector3 eaHitPoint = eachHit.point;
+                                Collider eaHitObj = eachHit.collider;
+                                if (eaHitObj.GetComponent<BP_Gear>() || eaHitObj.GetComponent<BP_Link>())
+                                {
+                                    FindObjectOfType<BP_LinkEditor>().getUpInput(eaHitObj.gameObject, hitPoint);
+                                    break;
+                                }
+                                else if (eaHitObj.GetComponent<BP_Joint>())
+                                { }
+                            }
                         }
-                        else
-                            FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
                         break;
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
                         {
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitObj.gameObject, hitPoint);
-                            print("success?");
                             //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         }
                         break;
@@ -185,7 +200,10 @@ public class BP_InputManager : MonoBehaviour {
                 //  허공에 Link의 끝을 위치시키는 경우
                 if (m_currMode == EditMode.Link)
                 {
-                    FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
+                    if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
+                    {
+                        FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
+                    }
                 }
                 else
                 {
@@ -196,6 +214,7 @@ public class BP_InputManager : MonoBehaviour {
                 }
             }
 
+            m_clickedObject = null;
             m_isButtonDown = false;
         }
     }

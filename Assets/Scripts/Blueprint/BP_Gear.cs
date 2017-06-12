@@ -28,6 +28,12 @@ public class BP_Gear : MonoBehaviour, IButton {
     //  기어를 제거 시 제거된 기어가 어느 부모의 자식으로 속해있었다면
     //  부모에게 가서 마찬가지로 제거를 해주어야 함.
 
+    //  자신에게 붙어있는 joint의 리스트
+    public List<BP_Joint> m_childJointList = new List<BP_Joint>();
+
+    //  Gear의 위치 이동 시 초기 위치값 저장
+    private Vector3 bf_position;
+
     public bool m_switch = false;
 
     //  Menu UI prefab
@@ -73,17 +79,18 @@ public class BP_Gear : MonoBehaviour, IButton {
 
     public void getDownInput(Vector3 hitPoint)
     {
-
+        bf_position = this.transform.position;
     }
 
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
+        bf_position = this.transform.position;
+        foreach (BP_Joint joint in m_childJointList)
+        {
+            joint.updateAllJointBfPosition();
+        }
 
-    }
-
-    public void getUpInput(Vector3 hitPoint)
-    {
-        if(m_itemOption == null)
+        if (m_itemOption == null)
         {
             print("BP_Gear: m_itemOpion을 찾을 수 없습니다.");
             return;
@@ -101,6 +108,11 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
     }
 
+    public void getUpInput(Vector3 hitPoint)
+    {
+        
+    }
+
     public void getMotion(Vector3 rayDir, Transform camera)
     {
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
@@ -113,6 +125,12 @@ public class BP_Gear : MonoBehaviour, IButton {
         Vector3 ret = new Vector3(ret_x, ret_y, BP_pos.z);
 
         this.transform.position = ret;
+        foreach (BP_Joint joint in m_childJointList)
+        {
+            //  이 기어에 연결된 joint들의 위치도 같이 변경
+            joint.transform.position = joint.bf_position + (this.transform.position - bf_position);
+            joint.updateJointPos();
+        }
     }
 
     public void linking(BP_Gear gear)

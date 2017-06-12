@@ -6,6 +6,10 @@ public class BP_Link : MonoBehaviour {
 
     public BP_Joint m_startJoint, m_endJoint;
 
+    //  자신에게 붙어있는 joint의 리스트
+    //public HashSet<BP_Joint> m_childJointList = new HashSet<BP_Joint>();
+    public List<BP_Joint> m_childJointList = new List<BP_Joint>();
+
     //  Joint의 위치를 바꿨을 때 위치 재할당을 위해 호출
     public void UpdatePosition()
     {

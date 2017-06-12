@@ -12,10 +12,13 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
     //  Joint prefab
     public BP_Joint m_prefab_joint;
 
-    //  위치 조정중인 링크 오브젝트 임시 저장
+    //  현재 만들고 위치 조정중인 링크 오브젝트 임시 저장
     private BP_Link tmp_link;
 
     public Vector3 m_startPos;
+
+    //  현재 성공적으로 링크 작업을 수행 중인가?
+    public bool m_isLinking = false;
 
     public void getDownInput(Vector3 hitPoint)
     { }
@@ -34,16 +37,29 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
         tmp_link.m_endJoint = Instantiate(m_prefab_joint);
         tmp_link.m_endJoint.Initialize(tmp_link, hitPoint);
 
-        //  시작 Joint에 연결할 오브젝트 저장
+        //  시작 Joint를 연결한 오브젝트 저장
         tmp_link.m_startJoint.m_attachedObj = hitObj;
-        
+        //  시작 Joint를 연결한 오브젝트가 Link인 경우
+        if(hitObj.GetComponent<BP_Link>())
+        {
+            hitObj.GetComponent<BP_Link>().m_childJointList.Add(tmp_link.m_startJoint);
+        }
+        else if (hitObj.GetComponent<BP_Gear>())
+        {
+            hitObj.GetComponent<BP_Gear>().m_childJointList.Add(tmp_link.m_startJoint);
+        }
+
         tmp_link.transform.position = m_startPos;
         tmp_link.transform.localScale = new Vector3(0, 0.1f, 0.01f);
+
+        m_isLinking = true;
     }
 
     public void getMotion(Vector3 hitPoint)
     {
         tmp_link.m_endJoint.transform.position = hitPoint;
+        //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
+        tmp_link.m_endJoint.bf_position = hitPoint;
 
         //  마우스 클릭 위치와 마우스 현재 위치로 링크 생성
         //  링크 위치는 두 위치의 중간값
@@ -67,20 +83,33 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
 
     public void getUpInput(Vector3 hitPoint)
     {
-        //  끝 에는 특정 오브젝트를 할당하지 않았음으로 null
+        //  끝 Joint를 특정 오브젝트에 붙이지 않았음으로 null
         tmp_link.m_endJoint.m_attachedObj = null;
 
         //  초기화
         tmp_link = null;
+
+        m_isLinking = false;
     }
 
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
-        //  끝 붙여진 오브젝트 할당
+        //  끝 Joint가 붙여진 오브젝트를 저장
         tmp_link.m_endJoint.m_attachedObj = hitObj;
+        //  끝 Joint를 연결한 Gear or Link의 childJointList에 추가
+        if (hitObj.GetComponent<BP_Link>())
+        {
+            hitObj.GetComponent<BP_Link>().m_childJointList.Add(tmp_link.m_endJoint);
+        }
+        else if (hitObj.GetComponent<BP_Gear>())
+        {
+            hitObj.GetComponent<BP_Gear>().m_childJointList.Add(tmp_link.m_endJoint);
+        }
 
         //  초기화
         tmp_link = null;
+
+        m_isLinking = false;
     }
 
     // Use this for initialization
