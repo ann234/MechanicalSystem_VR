@@ -19,7 +19,10 @@ public class BP_Joint : MonoBehaviour, IButton {
 
     public void Initialize(BP_Link myParent, Vector3 pos)
     {
+        Quaternion rot = FindObjectOfType<Blueprint>().transform.rotation;
+
         this.transform.position = pos;
+        this.transform.rotation = Quaternion.Inverse(rot);
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         bf_position = pos;
         m_parentLink = myParent;
@@ -45,17 +48,12 @@ public class BP_Joint : MonoBehaviour, IButton {
     public void getMotion(Vector3 rayDir, Transform camera)
     {
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        Vector3 dir = rayDir;
-        Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
-            + new Vector3(0, 0, -0.2f);
-
-        float ret_x = (dir.x * (BP_pos.z - camera.position.z) / dir.z) + camera.position.x;
-        float ret_y = (dir.y * (BP_pos.z - camera.position.z) / dir.z) + camera.position.y;
-        Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+        MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
 
         //  만약 이 Joint를 움직인다면 Link가 움직이면서 Link에 연결된 다른 Joint들도 움직여야 한다.
 
-        this.transform.position = hitPoint;
+        this.transform.position = hitTransform.position;
+        this.transform.rotation = Quaternion.Inverse(hitTransform.rotation);
         updateJointPos();
     }
 
@@ -74,8 +72,10 @@ public class BP_Joint : MonoBehaviour, IButton {
             : m_parentLink.m_startJoint.transform.position;
             float ratio = ((joint.bf_position - root_pos).magnitude) / ((bf_position - root_pos).magnitude);
 
-            joint.transform.position = root_pos + ratio * (new Vector3(this.transform.position.x, this.transform.position.y, -0.1f)
-                - new Vector3(root_pos.x, root_pos.y, -0.1f));
+            joint.transform.position = root_pos + ratio * (this.transform.position - root_pos);
+
+            //joint.transform.position = root_pos + ratio * (new Vector3(this.transform.position.x, this.transform.position.y, 0)
+            //    - new Vector3(root_pos.x, root_pos.y, 0));
             //joint.transform.position = joint.bf_position + (this.transform.position - bf_position);
 
             //  연결된 다른 Joint의 Link 또한 연결된 다른 Joint가 있을 것. 그것들 또한 들어가 변경

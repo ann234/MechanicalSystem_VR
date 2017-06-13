@@ -61,19 +61,8 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         tmp_link.m_endJoint.bf_position = hitPoint;
 
-        //  마우스 클릭 위치와 마우스 현재 위치로 링크 생성
-        //  링크 위치는 두 위치의 중간값
-        Vector3 midPoint = (m_startPos + hitPoint) / 2.0f;
-        float len = (m_startPos - hitPoint).magnitude;
-
-        //  링크 orientation
-        float angle = Mathf.Atan2((m_startPos.y - hitPoint.y),
-            (m_startPos.x - hitPoint.x));
-
-        //  prefab을 생성 후 Transform 값 할당
-        tmp_link.transform.position = midPoint;
-        tmp_link.transform.localScale = new Vector3(len, 0.1f, 0.01f);
-        tmp_link.transform.rotation = Quaternion.Euler(0, 0, angle * 180.0f / Mathf.PI);
+        //  Link 위치 계속해서 업데이트
+        tmp_link.UpdatePosition();
     }
 
     public void getMotion(Vector3 rayDir, Transform camera)

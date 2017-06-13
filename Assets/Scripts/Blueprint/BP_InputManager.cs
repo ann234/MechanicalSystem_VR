@@ -4,6 +4,18 @@ using UnityEngine;
 
 using Assets.Scripts.UI;
 
+public struct MyTransform
+{
+    public Vector3 position;
+    public Quaternion rotation;
+
+    public MyTransform(Vector3 _position, Quaternion _rotation)
+    {
+        position = _position;
+        rotation = _rotation;
+    }
+}
+
 public class BP_InputManager : MonoBehaviour {
 
     public enum EditMode
@@ -43,6 +55,38 @@ public class BP_InputManager : MonoBehaviour {
         checkInput();
     }
 
+    //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+    public MyTransform getBlueprintTransformAtPoint(Vector3 rayDir)
+    {
+        Ray ray = new Ray(m_Camera.position, m_Camera.forward);
+        RaycastHit[] hits = Physics.RaycastAll(ray);
+        foreach(RaycastHit hit in hits)
+        { 
+            if(hit.collider.GetComponent<Blueprint>())
+            {
+                Vector3 hitPoint = hit.point;
+                Quaternion hitRot = hit.collider.transform.rotation;
+
+                return new MyTransform(hitPoint, hitRot);
+            }
+        }
+
+        print("BP_InputManager: getBlueprintPosAtPoint error");
+        return new MyTransform(new Vector3(0, 0, 0), Quaternion.identity);
+        
+        ////  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+        //Vector3 dir = rayDir;
+
+        //Transform tr_blueprint = FindObjectOfType<Blueprint>().transform;
+        //Vector3 BP_pos = tr_blueprint.position + tr_blueprint.up * 0.2f;
+
+        //float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
+        //float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
+        //Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+
+        //return hitPoint;
+    }
+
     void checkMotion()
     {
         if (m_isButtonDown)
@@ -61,12 +105,7 @@ public class BP_InputManager : MonoBehaviour {
                             break;
                         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
                         Vector3 dir = ray.direction;
-                        Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
-                            + new Vector3(0, 0, -0.2f);
-
-                        float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
-                        float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
-                        Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+                        Vector3 hitPoint = getBlueprintTransformAtPoint(dir).position;
 
                         FindObjectOfType<BP_LinkEditor>().getMotion(hitPoint);
                         break;
@@ -206,12 +245,7 @@ public class BP_InputManager : MonoBehaviour {
             {
                 //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
                 Vector3 dir = ray.direction;
-                Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
-                    + new Vector3(0, 0, -0.01f);
-
-                float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
-                float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
-                Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
+                Vector3 hitPoint = getBlueprintTransformAtPoint(dir).position;
 
                 //  허공에 Link의 끝을 위치시키는 경우
                 if (m_currMode == EditMode.Link)

@@ -54,6 +54,8 @@ public class BP_Gear : MonoBehaviour, IButton {
 
         //  Gear의 초기 위치값 저장
         bf_position = this.transform.position;
+        Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
+        this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
     }
 	
 	// Update is called once per frame
@@ -77,7 +79,8 @@ public class BP_Gear : MonoBehaviour, IButton {
 
             //print(string.Format("Result Scaling matrix: {0}", ret_mat));
             gear.transform.position = new Vector3(ret_mat.m03, ret_mat.m13, ret_mat.m23);
-            gear.transform.rotation = this.transform.rotation;
+            Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
+            this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
 
             foreach (BP_Joint joint in gear.m_childJointList)
             {
@@ -139,15 +142,18 @@ public class BP_Gear : MonoBehaviour, IButton {
         if (m_isConnected)
             return;
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        Vector3 dir = rayDir;
-        Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
-            + new Vector3(0, 0, -0.01f);
+        MyTransform tr_BP = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
+        //Vector3 dir = rayDir;
+        //Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
+        //    + new Vector3(0, 0, -0.01f);
 
-        float ret_x = (dir.x * (BP_pos.z -camera.position.z) / dir.z) + camera.position.x;
-        float ret_y = (dir.y * (BP_pos.z - camera.position.z) / dir.z) + camera.position.y;
-        Vector3 ret = new Vector3(ret_x, ret_y, BP_pos.z);
+        //float ret_x = (dir.x * (BP_pos.z -camera.position.z) / dir.z) + camera.position.x;
+        //float ret_y = (dir.y * (BP_pos.z - camera.position.z) / dir.z) + camera.position.y;
+        //Vector3 ret = new Vector3(ret_x, ret_y, BP_pos.z);
 
-        this.transform.position = ret;
+        this.transform.position = tr_BP.position + (FindObjectOfType<BP_InputManager>().transform.up * 0.1f);
+        Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
+        this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
         foreach (BP_Joint joint in m_childJointList)
         {
             //  이 기어에 연결된 joint들의 위치도 같이 변경
