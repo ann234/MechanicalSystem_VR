@@ -49,8 +49,11 @@ public class BP_Gear : MonoBehaviour, IButton {
     // Use this for initialization
     void Start () {
         //  가지고 있는 ItemOption UI 게임오브젝트 저장
-        m_itemOption = this.GetComponentInChildren<ItemOption>();
-        m_itemOption.gameObject.SetActive(false);
+        if(m_itemOption)
+        {
+            m_itemOption = this.GetComponentInChildren<ItemOption>();
+            m_itemOption.gameObject.SetActive(false);
+        }
 
         //  Gear의 초기 위치값 저장
         bf_position = this.transform.position;
@@ -60,6 +63,11 @@ public class BP_Gear : MonoBehaviour, IButton {
 	
 	// Update is called once per frame
 	void Update () {
+    }
+
+    public void setPosition(Vector3 pos)
+    {
+        this.transform.position = pos + (FindObjectOfType<Blueprint>().transform.up * 0.01f);
     }
 
     public void Scaling()
@@ -114,22 +122,22 @@ public class BP_Gear : MonoBehaviour, IButton {
             joint.updateAllJointBfPosition();
         }
 
-        if (m_itemOption == null)
-        {
-            print("BP_Gear: m_itemOpion을 찾을 수 없습니다.");
-            return;
-        }
+        //if (m_itemOption == null)
+        //{
+        //    print("BP_Gear: m_itemOpion을 찾을 수 없습니다.");
+        //    return;
+        //}
 
-        m_isMenuOpen = !m_isMenuOpen;
+        //m_isMenuOpen = !m_isMenuOpen;
 
-        if (m_isMenuOpen)
-        {
-            m_itemOption.gameObject.SetActive(true);
-        }
-        else
-        {
-            m_itemOption.gameObject.SetActive(false);
-        }
+        //if (m_isMenuOpen)
+        //{
+        //    m_itemOption.gameObject.SetActive(true);
+        //}
+        //else
+        //{
+        //    m_itemOption.gameObject.SetActive(false);
+        //}
     }
 
     public void getUpInput(Vector3 hitPoint)
@@ -151,7 +159,7 @@ public class BP_Gear : MonoBehaviour, IButton {
         //float ret_y = (dir.y * (BP_pos.z - camera.position.z) / dir.z) + camera.position.y;
         //Vector3 ret = new Vector3(ret_x, ret_y, BP_pos.z);
 
-        this.transform.position = tr_BP.position + (FindObjectOfType<BP_InputManager>().transform.up * 0.1f);
+        setPosition(tr_BP.position);
         Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
         this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
         foreach (BP_Joint joint in m_childJointList)
@@ -161,7 +169,7 @@ public class BP_Gear : MonoBehaviour, IButton {
             joint.updateJointPos();
         }
 
-        Scaling();  
+        //Scaling();  
     }
 
     public void linking(BP_Gear gear)

@@ -7,11 +7,20 @@ using Assets.Scripts.UI;
 
 public class BP_AddGear : MonoBehaviour, IButton
 {
+    enum GearType
+    {
+        Small = 0,
+        Medium,
+        Large
+    }
     [SerializeField]
     private GameObject m_Blueprint;
 
     [SerializeField]
     private GameObject m_BP_Gear_prefab;
+
+    [SerializeField]
+    private GearType gearType;
 
     // Use this for initialization
     void Start()
@@ -46,7 +55,19 @@ public class BP_AddGear : MonoBehaviour, IButton
         {
             //  Blueprint 정중앙에 BP_Gear 생성
             Transform newGear = Instantiate(m_BP_Gear_prefab).transform;
-            newGear.position = m_Blueprint.transform.position + new Vector3(0, 0, -0.1f);
+            switch(gearType)
+            {
+                case GearType.Small:
+                    newGear.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+                    break;
+                case GearType.Medium:
+                    newGear.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+                    break;
+                case GearType.Large:
+                    newGear.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+                    break;
+            }
+            newGear.GetComponent<BP_Gear>().setPosition(m_Blueprint.transform.position);
         }
         else
         {

@@ -14,8 +14,8 @@ public class BP_GearBtn : MonoBehaviour, IButton {
     // Use this for initialization
     void Start () {
         //  가지고 있는 ItemOption UI 게임오브젝트 저장
-        m_itemOption = this.GetComponentInChildren<ItemOption>();
-        m_itemOption.gameObject.SetActive(false);
+        //m_itemOption = this.GetComponentInChildren<ItemOption>();
+        //m_itemOption.gameObject.SetActive(false);
     }
 	
 	// Update is called once per frame
@@ -40,20 +40,20 @@ public class BP_GearBtn : MonoBehaviour, IButton {
 
     public void getDownInput(Vector3 hitPoint)
     {
-        if (m_itemOption == null)
-        {
-            print("BP_GearBtn: m_itemOpion을 찾을 수 없습니다.");
-            return;
-        }
+        //if (m_itemOption == null)
+        //{
+        //    print("BP_GearBtn: m_itemOpion을 찾을 수 없습니다.");
+        //    return;
+        //}
 
-        m_isMenuOpen = !m_isMenuOpen;
-        if (m_isMenuOpen)
-        {
-            m_itemOption.gameObject.SetActive(true);
-        }
-        else
-        {
-            m_itemOption.gameObject.SetActive(false);
-        }
+        //m_isMenuOpen = !m_isMenuOpen;
+        //if (m_isMenuOpen)
+        //{
+        //    m_itemOption.gameObject.SetActive(true);
+        //}
+        //else
+        //{
+        //    m_itemOption.gameObject.SetActive(false);
+        //}
     }
 }

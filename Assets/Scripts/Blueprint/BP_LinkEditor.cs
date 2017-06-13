@@ -34,6 +34,9 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
         //  시작, 끝 Joint 생성
         tmp_link.m_startJoint = Instantiate(m_prefab_joint);
         tmp_link.m_startJoint.Initialize(tmp_link, hitPoint);
+        //  기본 Joint type은 Hinge로
+        tmp_link.m_startJoint.setJointType(BP_Joint.JointType.Hinge);
+
         tmp_link.m_endJoint = Instantiate(m_prefab_joint);
         tmp_link.m_endJoint.Initialize(tmp_link, hitPoint);
 
@@ -72,8 +75,27 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
 
     public void getUpInput(Vector3 hitPoint)
     {
+        Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
+        RaycastHit[] hits = Physics.RaycastAll(ray);
+
+        foreach (RaycastHit eachHit in hits)
+        {
+            Vector3 eaHitPoint = eachHit.point;
+            Collider eaHitObj = eachHit.collider;
+            if ((eaHitObj.GetComponent<BP_Gear>() || eaHitObj.GetComponent<BP_Link>())
+                && eaHitObj.GetComponent<BP_Link>() != tmp_link)
+            {
+                print("돼");
+                FindObjectOfType<BP_LinkEditor>().getUpInput(eaHitObj.gameObject, hitPoint);
+                break;
+            }
+            else if (eaHitObj.GetComponent<BP_Joint>())
+            { }
+        }
+
         //  끝 Joint를 특정 오브젝트에 붙이지 않았음으로 null
         tmp_link.m_endJoint.m_attachedObj = null;
+        tmp_link.m_endJoint.setJointType(BP_Joint.JointType.None);
 
         //  초기화
         tmp_link = null;
@@ -85,10 +107,15 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
     {
         //  끝 Joint가 붙여진 오브젝트를 저장
         tmp_link.m_endJoint.m_attachedObj = hitObj;
+        //  Joint type은 Hinge로
+        tmp_link.m_endJoint.setJointType(BP_Joint.JointType.Hinge);
         //  끝 Joint를 연결한 Gear or Link의 childJointList에 추가
         if (hitObj.GetComponent<BP_Link>())
         {
-            hitObj.GetComponent<BP_Link>().m_childJointList.Add(tmp_link.m_endJoint);
+            if(!hitObj.GetComponent<BP_Link>() == tmp_link)
+                hitObj.GetComponent<BP_Link>().m_childJointList.Add(tmp_link.m_endJoint);
+            else
+                tmp_link.m_endJoint.setJointType(BP_Joint.JointType.None);
         }
         else if (hitObj.GetComponent<BP_Gear>())
         {

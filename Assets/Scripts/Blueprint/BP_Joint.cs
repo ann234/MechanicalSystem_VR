@@ -7,6 +7,16 @@ using System;
 
 public class BP_Joint : MonoBehaviour, IButton {
 
+    public enum JointType
+    {
+        None = 0,
+        Hinge,
+        Fixed
+    }
+    //  Joint Type에 따라 Joint의 색상을 바꿀거임.
+    public Material[] m_matOfJoint = new Material[3];
+    public JointType m_jointType = JointType.None;
+
     public BP_Link m_parentLink;
 
     //  Joint로 묶인 오브젝트
@@ -14,7 +24,7 @@ public class BP_Joint : MonoBehaviour, IButton {
 
     //  Joint 위치 이동 시 이전 위치를 백업.
     public Vector3 bf_position;
-
+    
     private bool m_isPositioning = false;
 
     public void Initialize(BP_Link myParent, Vector3 pos)
@@ -26,6 +36,24 @@ public class BP_Joint : MonoBehaviour, IButton {
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         bf_position = pos;
         m_parentLink = myParent;
+    }
+
+    public void setJointType(JointType type)
+    {
+        this.m_jointType = type;
+        //  Type에 따라 Joint의 material 변경
+        switch(this.m_jointType)
+        {
+            case JointType.None:
+                this.GetComponent<Renderer>().material = m_matOfJoint[0];
+                break;
+            case JointType.Hinge:
+                this.GetComponent<Renderer>().material = m_matOfJoint[1];
+                break;
+            case JointType.Fixed:
+                this.GetComponent<Renderer>().material = m_matOfJoint[2];
+                break;
+        }
     }
 
     public void updateAllJointBfPosition()
@@ -122,21 +150,26 @@ public class BP_Joint : MonoBehaviour, IButton {
             //  Gear에 Joint를 연결하는 경우
             if (_hitObj.GetComponent<BP_Gear>())
             {
+                print("gear");
                 this.m_attachedObj = _hitObj.gameObject;
                 //  연결한 Gear의 childJointList에 이 Joint를 추가
                 _hitObj.GetComponent<BP_Gear>().m_childJointList.Add(this);
+                setJointType(JointType.Hinge);
                 return;
             }
             //  다른 Link에 연결하는 경우
             else if(_hitObj.GetComponent<BP_Link>() && _hitObj.gameObject != m_parentLink.gameObject)
             {
+                print("link");
                 this.m_attachedObj = _hitObj.gameObject;
                 //  연결한 링크의 childJointList에 이 Joint를 추가
                 _hitObj.GetComponent<BP_Link>().m_childJointList.Add(this);
+                setJointType(JointType.Hinge);
                 return;
             }
         }
 
+        setJointType(JointType.None);
         this.m_attachedObj = null;
         return;
     }

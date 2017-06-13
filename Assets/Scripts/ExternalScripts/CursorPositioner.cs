@@ -26,5 +26,8 @@ public class CursorPositioner : MonoBehaviour {
                 transform.localPosition = new Vector3(0, 0, defaultPosZ);
             }
         }
-	}
+
+        Vector3 forward = camera.TransformDirection(Vector3.forward) * 10;
+        Debug.DrawRay(camera.position, forward, Color.red);
+    }
 }

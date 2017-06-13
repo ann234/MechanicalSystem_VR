@@ -138,6 +138,7 @@ public class BP_InputManager : MonoBehaviour {
             {
                 Vector3 hitPoint = hit.point;
                 Collider hitObj = hit.collider;
+                m_clickedObject = hitObj.GetComponent(typeof(IButton)) as IButton;
 
                 switch (m_currMode)
                 {
@@ -173,12 +174,8 @@ public class BP_InputManager : MonoBehaviour {
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
                         {
-                            m_clickedObject = hitObj.GetComponent(typeof(IButton)) as IButton;
                             m_clickedObject.getDownInput(hitPoint);
                         }
-                        //  State change 버튼을 위해
-                        else if(hitObj.GetComponent(typeof(IButton)))
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                 }
             }
@@ -186,6 +183,7 @@ public class BP_InputManager : MonoBehaviour {
         }
         else if (Input.GetButtonUp("Fire1"))
         {
+            print("getUpInput");
             foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
             {
                 gear.m_switch = true;
@@ -197,7 +195,7 @@ public class BP_InputManager : MonoBehaviour {
             RaycastHit hit;
 
             // Do the raycast forweards to see if we hit an interactive item
-            if (Physics.Raycast(ray, out hit))
+            Physics.Raycast(ray, out hit);
             {
                 Vector3 hitPoint = hit.point;
                 Collider hitObj = hit.collider;
@@ -211,56 +209,15 @@ public class BP_InputManager : MonoBehaviour {
                     case EditMode.Link:
                         if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
                         {
-                            RaycastHit[] hits = Physics.RaycastAll(ray);
-
-                            foreach(RaycastHit eachHit in hits)
-                            {
-                                Vector3 eaHitPoint = eachHit.point;
-                                Collider eaHitObj = eachHit.collider;
-                                if (eaHitObj.GetComponent<BP_Gear>() || eaHitObj.GetComponent<BP_Link>())
-                                {
-                                    FindObjectOfType<BP_LinkEditor>().getUpInput(eaHitObj.gameObject, hitPoint);
-                                    break;
-                                }
-                                else if(eaHitObj.GetComponent<Blueprint>())
-                                {
-                                    FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
-                                    break;
-                                }
-                                else if (eaHitObj.GetComponent<BP_Joint>())
-                                { }
-                            }
+                            FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
                         }
                         break;
                     case EditMode.None:
-                        if (hitObj.GetComponent(typeof(IButton)))
-                        {
-                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitObj.gameObject, hitPoint);
-                            //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
-                        }
+                        print("None getUpInput");
+                        if(m_clickedObject != null)
+                            m_clickedObject.getUpInput(hitObj.gameObject, hitPoint);
+                        //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
                         break;
-                }
-            }
-            else
-            {
-                //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-                Vector3 dir = ray.direction;
-                Vector3 hitPoint = getBlueprintTransformAtPoint(dir).position;
-
-                //  허공에 Link의 끝을 위치시키는 경우
-                if (m_currMode == EditMode.Link)
-                {
-                    if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
-                    {
-                        FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
-                    }
-                }
-                else
-                {
-                    if (m_clickedObject != null)
-                    {
-                        m_clickedObject.getUpInput(hitPoint);
-                    }
                 }
             }
 

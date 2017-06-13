@@ -25,7 +25,11 @@ public class BP_NoneModeBtn : MonoBehaviour, IButton {
     {
         BP_InputManager im = FindObjectOfType<BP_InputManager>();
         if (im)
+        {
             im.m_currMode = BP_InputManager.EditMode.None;
+            GameObject.Find("MyWrench").GetComponent<MeshRenderer>().enabled = true;
+            GameObject.Find("MyHammer").GetComponent<MeshRenderer>().enabled = false;
+        }
         else
             print("BP_GearModeBtn: BP_InputManager를 찾지 못했습니다");
     }

@@ -34,9 +34,9 @@ public class Gear : MonoBehaviour {
             if (rot_current > 360.0f)
                 rot_current = 0;
             if(isLeft)
-                rot_current += 360.0f * Time.deltaTime * 1.0f / m_radius;
+                rot_current += 360.0f * Time.deltaTime * 0.1f / m_radius;
             else
-                rot_current -= 360.0f * Time.deltaTime * 1.0f / m_radius;
+                rot_current -= 360.0f * Time.deltaTime * 0.1f / m_radius;
             this.transform.eulerAngles = new Vector3(rot_current, -90, -90);
 
             //  use rotate
