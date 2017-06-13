@@ -15,13 +15,14 @@ public class BP_Gear : MonoBehaviour, IButton {
         set { transform.localScale = new Vector3(value, value, 0); }
     }
 
-    public float m_connectionAngle = 0;
+    private float m_connectionAngle = 0;
     public float m_ConnectionAngle
     {
         get
         {
             return m_connectionAngle;
         }
+        set { m_connectionAngle = value; }
     }
     public List<BP_Gear> m_linkedGearList = new List<BP_Gear>();
     //  문제점
@@ -32,9 +33,12 @@ public class BP_Gear : MonoBehaviour, IButton {
     public List<BP_Joint> m_childJointList = new List<BP_Joint>();
 
     //  Gear의 위치 이동 시 초기 위치값 저장
-    private Vector3 bf_position;
+    public Vector3 bf_position;
 
     public bool m_switch = false;
+
+    //  이 Gear가 다른 Gear에 연결되어 있는 상태인가?(다른 기어의 자식인가)
+    private bool m_isConnected = false;
 
     //  Menu UI prefab
     private ItemOption m_itemOption;
@@ -47,20 +51,20 @@ public class BP_Gear : MonoBehaviour, IButton {
         //  가지고 있는 ItemOption UI 게임오브젝트 저장
         m_itemOption = this.GetComponentInChildren<ItemOption>();
         m_itemOption.gameObject.SetActive(false);
+
+        //  Gear의 초기 위치값 저장
+        bf_position = this.transform.position;
     }
 	
 	// Update is called once per frame
 	void Update () {
-        if(m_switch)
-            Scaling();
     }
 
-    void Scaling()
+    public void Scaling()
     {
         foreach(BP_Gear gear in m_linkedGearList)
         {
             float length = Mathf.Abs(this.m_Radius / 2.0f + gear.m_Radius / 2.0f);
-            print(length);
             
             // 
             Matrix4x4 transl_mat = Matrix4x4.TRS(new Vector3(length, 0, 0), Quaternion.identity, Vector3.one);
@@ -74,17 +78,34 @@ public class BP_Gear : MonoBehaviour, IButton {
             //print(string.Format("Result Scaling matrix: {0}", ret_mat));
             gear.transform.position = new Vector3(ret_mat.m03, ret_mat.m13, ret_mat.m23);
             gear.transform.rotation = this.transform.rotation;
+
+            foreach (BP_Joint joint in gear.m_childJointList)
+            {
+                //  이 기어의 자식 기어에 연결된 joint들의 위치도 같이 변경
+                joint.transform.position = joint.bf_position + (gear.transform.position - gear.bf_position);
+                joint.updateJointPos();
+            }
+            gear.Scaling();
         }
     }
 
-    public void getDownInput(Vector3 hitPoint)
+    private void updateBfPosition()
     {
         bf_position = this.transform.position;
+        foreach (BP_Gear gear in m_linkedGearList)
+        {
+            gear.updateBfPosition();
+        }
+    }
+    public void getDownInput(Vector3 hitPoint)
+    {
+        updateBfPosition();
     }
 
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
-        bf_position = this.transform.position;
+        updateBfPosition();
+
         foreach (BP_Joint joint in m_childJointList)
         {
             joint.updateAllJointBfPosition();
@@ -115,6 +136,8 @@ public class BP_Gear : MonoBehaviour, IButton {
 
     public void getMotion(Vector3 rayDir, Transform camera)
     {
+        if (m_isConnected)
+            return;
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
         Vector3 dir = rayDir;
         Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
@@ -131,6 +154,8 @@ public class BP_Gear : MonoBehaviour, IButton {
             joint.transform.position = joint.bf_position + (this.transform.position - bf_position);
             joint.updateJointPos();
         }
+
+        Scaling();  
     }
 
     public void linking(BP_Gear gear)
@@ -146,7 +171,9 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
 
         gear.m_linkedGearList.Add(this);
-        gear.m_switch = true;
+        m_isConnected = true;
         print("BP_Gear: Link successfully");
+
+        gear.Scaling();
     }
 }

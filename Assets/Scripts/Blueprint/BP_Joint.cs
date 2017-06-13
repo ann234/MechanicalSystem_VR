@@ -77,13 +77,10 @@ public class BP_Joint : MonoBehaviour, IButton {
             joint.transform.position = root_pos + ratio * (new Vector3(this.transform.position.x, this.transform.position.y, -0.1f)
                 - new Vector3(root_pos.x, root_pos.y, -0.1f));
             //joint.transform.position = joint.bf_position + (this.transform.position - bf_position);
-            joint.m_parentLink.UpdatePosition();
-        }
 
-        //  연결된 다른 Joint의 Link 또한 연결된 다른 Joint가 있을 것. 그것들 또한 들어가 변경
-        foreach (BP_Joint joint in m_parentLink.m_childJointList)
-        {
+            //  연결된 다른 Joint의 Link 또한 연결된 다른 Joint가 있을 것. 그것들 또한 들어가 변경
             joint.updateJointPos();
+            //joint.m_parentLink.UpdatePosition();
         }
     }
 

@@ -86,6 +86,11 @@ public class BP_InputManager : MonoBehaviour {
     {
         if (Input.GetButtonDown("Fire1"))
         {
+            foreach(BP_Gear gear in FindObjectsOfType<BP_Gear>())
+            {
+                gear.m_switch = true;
+            }
+
             // Create a ray that points forwards from the camera.
             Ray ray = new Ray(m_Camera.position, m_Camera.forward);
             RaycastHit hit;
@@ -142,6 +147,11 @@ public class BP_InputManager : MonoBehaviour {
         }
         else if (Input.GetButtonUp("Fire1"))
         {
+            foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
+            {
+                gear.m_switch = true;
+            }
+
             // Create a ray that points forwards from the camera.
             Ray ray = new Ray(m_Camera.position, m_Camera.forward);
 
@@ -156,7 +166,8 @@ public class BP_InputManager : MonoBehaviour {
                 switch (m_currMode)
                 {
                     case EditMode.GEAR:
-                        (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                        if(hitObj.GetComponent(typeof(IButton)))
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
                         break;
                     case EditMode.Link:
                         if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
@@ -170,6 +181,11 @@ public class BP_InputManager : MonoBehaviour {
                                 if (eaHitObj.GetComponent<BP_Gear>() || eaHitObj.GetComponent<BP_Link>())
                                 {
                                     FindObjectOfType<BP_LinkEditor>().getUpInput(eaHitObj.gameObject, hitPoint);
+                                    break;
+                                }
+                                else if(eaHitObj.GetComponent<Blueprint>())
+                                {
+                                    FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
                                     break;
                                 }
                                 else if (eaHitObj.GetComponent<BP_Joint>())
