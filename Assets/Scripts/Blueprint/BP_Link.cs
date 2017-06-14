@@ -20,16 +20,16 @@ public class BP_Link : MonoBehaviour {
         float len = (startPos - endPos).magnitude;
 
         //  링크 orientation
-        float angleXY = Mathf.Atan2((startPos.y - endPos.y),
-            (startPos.x - endPos.x));
-        float angleXZ = Mathf.Atan2((startPos.z - endPos.z),
-           (new Vector2(startPos.x, startPos.y) - new Vector2(endPos.x, endPos.y)).magnitude);
+        //float angleXY = Mathf.Atan2((startPos.y - endPos.y),
+        //    (startPos.x - endPos.x));
+        //float angleXZ = Mathf.Atan2((startPos.z - endPos.z),
+        //   (new Vector2(startPos.x, startPos.y) - new Vector2(endPos.x, endPos.y)).magnitude);
 
         //  Transform 값 재할당
         this.transform.position = midPoint;
         this.transform.localScale = new Vector3(len, 0.03f, 0.03f);
 
-        Quaternion ret = Quaternion.FromToRotation(new Vector3(1, 0, 0),
+        Quaternion ret = Quaternion.FromToRotation(FindObjectOfType<Blueprint>().transform.right,
             (new Vector3(endPos.x, endPos.y, endPos.z) - new Vector3(startPos.x, startPos.y, startPos.z)).normalized);
 
         //Quaternion tr = Quaternion.Inverse(FindObjectOfType<Blueprint>().transform.rotation);

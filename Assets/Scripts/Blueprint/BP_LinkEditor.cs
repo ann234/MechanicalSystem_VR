@@ -61,6 +61,7 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
     public void getMotion(Vector3 hitPoint)
     {
         tmp_link.m_endJoint.transform.position = hitPoint;
+
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         tmp_link.m_endJoint.bf_position = hitPoint;
 
@@ -82,12 +83,16 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
         {
             Vector3 eaHitPoint = eachHit.point;
             Collider eaHitObj = eachHit.collider;
+            if(eaHitObj.GetComponent<Blueprint>())
+            {
+                //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
+                tmp_link.m_endJoint.transform.position = hitPoint;
+            }
             if ((eaHitObj.GetComponent<BP_Gear>() || eaHitObj.GetComponent<BP_Link>())
                 && eaHitObj.GetComponent<BP_Link>() != tmp_link)
             {
-                print("돼");
                 FindObjectOfType<BP_LinkEditor>().getUpInput(eaHitObj.gameObject, hitPoint);
-                break;
+                return;
             }
             else if (eaHitObj.GetComponent<BP_Joint>())
             { }
@@ -112,7 +117,7 @@ public class BP_LinkEditor : MonoBehaviour, IButton {
         //  끝 Joint를 연결한 Gear or Link의 childJointList에 추가
         if (hitObj.GetComponent<BP_Link>())
         {
-            if(!hitObj.GetComponent<BP_Link>() == tmp_link)
+            if(!(hitObj.GetComponent<BP_Link>() == tmp_link))
                 hitObj.GetComponent<BP_Link>().m_childJointList.Add(tmp_link.m_endJoint);
             else
                 tmp_link.m_endJoint.setJointType(BP_Joint.JointType.None);

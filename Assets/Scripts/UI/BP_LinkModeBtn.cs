@@ -19,6 +19,7 @@ public class BP_LinkModeBtn : MonoBehaviour, IButton {
             im.m_currMode = BP_InputManager.EditMode.Link;
             GameObject.Find("MyHammer").GetComponent<MeshRenderer>().enabled = true;
             GameObject.Find("MyWrench").GetComponent<MeshRenderer>().enabled = false;
+            GameObject.Find("MyScissors").GetComponent<MeshRenderer>().enabled = false;
         }
         else
             print("BP_GearModeBtn: BP_InputManager를 찾지 못했습니다");

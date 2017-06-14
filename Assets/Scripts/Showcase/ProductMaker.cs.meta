@@ -1,10 +1,16 @@
 fileFormatVersion: 2
 guid: 833780d7ed1982c4d9663bd35bd4a463
-timeCreated: 1497372439
+timeCreated: 1497470388
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - m_realGear: {fileID: 1747262627497894, guid: 586f6293d9150f344bee22faa13d0888,
+      type: 2}
+  - m_realLink: {fileID: 1385043305112192, guid: ab981a2eadf2fa242b518c37e5880707,
+      type: 2}
+  - m_endeffector: {fileID: 114160194352813468, guid: ed7a1fdfe5780f946915c386cd3f4b9e,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

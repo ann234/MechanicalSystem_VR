@@ -5,14 +5,15 @@ using System.Runtime.CompilerServices;
 
 using Assets.Scripts.UI;
 
+public enum GearType
+{
+    Small = 0,
+    Medium,
+    Large
+}
+
 public class BP_AddGear : MonoBehaviour, IButton
 {
-    enum GearType
-    {
-        Small = 0,
-        Medium,
-        Large
-    }
     [SerializeField]
     private GameObject m_Blueprint;
 

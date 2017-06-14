@@ -121,23 +121,6 @@ public class BP_Gear : MonoBehaviour, IButton {
         {
             joint.updateAllJointBfPosition();
         }
-
-        //if (m_itemOption == null)
-        //{
-        //    print("BP_Gear: m_itemOpion을 찾을 수 없습니다.");
-        //    return;
-        //}
-
-        //m_isMenuOpen = !m_isMenuOpen;
-
-        //if (m_isMenuOpen)
-        //{
-        //    m_itemOption.gameObject.SetActive(true);
-        //}
-        //else
-        //{
-        //    m_itemOption.gameObject.SetActive(false);
-        //}
     }
 
     public void getUpInput(Vector3 hitPoint)

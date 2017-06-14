@@ -2,20 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Link
-{
-    public Transform[] m_joints = new Transform[2];
-    public Transform m_link;
-
-    public Link() { }
-
-    public Link(Transform[] joints, Transform link)
-    {
-        m_joints = joints;
-        m_link = link;
-    }
-}
-
 public class LinkEditor : MechanicEditor
 {
     [SerializeField]

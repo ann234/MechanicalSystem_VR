@@ -9,7 +9,7 @@ public class GearEditor : MechanicEditor
     
     private Vector3 m_point;
 
-    private List<Gear> m_gearList = new List<Gear>();
+    public List<Gear> m_gearList = new List<Gear>();
 
     public bool isSimulateOn = false;
 
@@ -17,18 +17,13 @@ public class GearEditor : MechanicEditor
     public override void Start()
     {
         base.Start();
-
-        foreach(Gear gear in FindObjectsOfType<Gear>())
-        {
-            m_gearList.Add(gear);
-        }
     }
 
     // Update is called once per frame
     void Update () {
 		if(isSimulateOn)
         {
-            foreach(Gear gear in m_gearList)
+            foreach(Gear gear in FindObjectsOfType<Gear>())
             {
                 gear.Rotate();
             }

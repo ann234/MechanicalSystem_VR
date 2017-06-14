@@ -6,8 +6,7 @@ public class EndEffector : MonoBehaviour {
     
     public GameObject prefab;
     private List<GameObject> lineList;
-
-    public GameObject parent_gear;
+    
     //  기어 회전 on/off
     public bool isRotate = false;
     private int currentIndex = 0;

@@ -29,10 +29,11 @@ public class BP_Joint : MonoBehaviour, IButton {
 
     public void Initialize(BP_Link myParent, Vector3 pos)
     {
-        Quaternion rot = FindObjectOfType<Blueprint>().transform.rotation;
+        Quaternion rot = Quaternion.Euler(FindObjectOfType<Blueprint>().transform.rotation.eulerAngles
+            + new Vector3(90, 0, 0));
 
         this.transform.position = pos;
-        this.transform.rotation = Quaternion.Inverse(rot);
+        this.transform.rotation = rot;
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         bf_position = pos;
         m_parentLink = myParent;
@@ -81,7 +82,7 @@ public class BP_Joint : MonoBehaviour, IButton {
         //  만약 이 Joint를 움직인다면 Link가 움직이면서 Link에 연결된 다른 Joint들도 움직여야 한다.
 
         this.transform.position = hitTransform.position;
-        this.transform.rotation = Quaternion.Inverse(hitTransform.rotation);
+        
         updateJointPos();
     }
 
