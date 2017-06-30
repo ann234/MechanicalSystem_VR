@@ -13,8 +13,7 @@ public class BP_DeleteManager : MonoBehaviour {
             //  Gear에 붙어있는 모든 Joint들의 attached_obj를 해제
             foreach(BP_Joint joint in target.m_childJointList)
             {
-                joint.m_attachedObj = null;
-                joint.setJointType(BP_Joint.JointType.None);
+                joint.deleteSelf();
                 //  BP를 지우니까 실제 Hinge를 지울 리가 없잖아
                 //Destroy(joint.GetComponent<HingeJoint>());
             }
@@ -39,8 +38,7 @@ public class BP_DeleteManager : MonoBehaviour {
             }
             foreach (BP_Joint joint in target.m_childJointList)
             {
-                joint.m_attachedObj = null;
-                joint.setJointType(BP_Joint.JointType.None);
+                joint.deleteSelf();
                 //Destroy(joint.GetComponent<HingeJoint>());
             }
 

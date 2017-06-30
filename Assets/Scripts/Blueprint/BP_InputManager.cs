@@ -23,7 +23,8 @@ public class BP_InputManager : MonoBehaviour {
         None = 0,
         Link,
         GEAR,
-        Delete
+        Delete,
+        EndEffector
     }
 
     [SerializeField]
@@ -42,6 +43,10 @@ public class BP_InputManager : MonoBehaviour {
     private BP_Gear m_parentGear;
 
     private GameObject m_clickedObject;
+
+    //  End Effector의 prefab
+    [SerializeField]
+    private GameObject m_prefab_ef;
 
     // Use this for initialization
     void Start()
@@ -74,18 +79,6 @@ public class BP_InputManager : MonoBehaviour {
 
         print("BP_InputManager: getBlueprintPosAtPoint error");
         return new MyTransform(new Vector3(0, 0, 0), Quaternion.identity);
-        
-        ////  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        //Vector3 dir = rayDir;
-
-        //Transform tr_blueprint = FindObjectOfType<Blueprint>().transform;
-        //Vector3 BP_pos = tr_blueprint.position + tr_blueprint.up * 0.2f;
-
-        //float ret_x = (dir.x * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.x;
-        //float ret_y = (dir.y * (BP_pos.z - m_Camera.position.z) / dir.z) + m_Camera.position.y;
-        //Vector3 hitPoint = new Vector3(ret_x, ret_y, BP_pos.z);
-
-        //return hitPoint;
     }
 
     void checkMotion()
@@ -193,7 +186,6 @@ public class BP_InputManager : MonoBehaviour {
         }
         else if (Input.GetButtonUp("Fire1"))
         {
-            print("getUpInput");
             foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
             {
                 gear.m_switch = true;
@@ -222,8 +214,7 @@ public class BP_InputManager : MonoBehaviour {
                         }
                         else if (m_clickedObject != null)
                         {
-                            if (m_clickedObject.GetComponent<BP_LinkModeBtn>() ||
-                                m_clickedObject.GetComponent<BP_NoneModeBtn>())
+                            if (m_clickedObject.CompareTag("Tool"))
                             {
                                 m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
                             }
@@ -232,8 +223,7 @@ public class BP_InputManager : MonoBehaviour {
                     case EditMode.Delete:
                         if (m_clickedObject != null)
                         {
-                            if (m_clickedObject.GetComponent<BP_LinkModeBtn>() ||
-                                m_clickedObject.GetComponent<BP_NoneModeBtn>())
+                            if (m_clickedObject.CompareTag("Tool"))
                             {
                                 m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
                             }
@@ -241,10 +231,38 @@ public class BP_InputManager : MonoBehaviour {
                                 GetComponent<BP_DeleteManager>().deleteObject(m_clickedObject);
                         }
                         break;
+                    case EditMode.EndEffector:
+                        if(hitObj)
+                        {
+                            if(hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_Gear>())
+                            {
+                                Transform ef = Instantiate(m_prefab_ef).transform;
+                                ef.position = hitPoint;
+                                ef.GetComponent<BP_EndEffector>().m_attachedObj = hitObj.gameObject;
+                                if (hitObj.GetComponent<BP_Link>())
+                                {
+                                    hitObj.GetComponent<BP_Link>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                                }
+                                else if (hitObj.GetComponent<BP_Gear>())
+                                {
+                                    hitObj.GetComponent<BP_Gear>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                                }
+                            }
+                            else if(hitObj.GetComponent<BP_EndEffector>())
+                            {
+                                hitObj.GetComponent<BP_EndEffector>().offEndEffector();
+                            }
+                            else if (m_clickedObject.CompareTag("Tool"))
+                            {
+                                m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                            }
+                        }
+                        break;
                     case EditMode.None:
                         if(m_clickedObject != null)
                         {
-                            if(m_clickedObject.GetComponent(typeof(IButton)))
+                            if(m_clickedObject.GetComponent(typeof(IButton)) 
+                                && !m_clickedObject.GetComponent<BP_EndEffector>())
                             {
                                 if (hitObj)
                                 {

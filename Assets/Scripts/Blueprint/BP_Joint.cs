@@ -11,12 +11,14 @@ public class BP_Joint : MonoBehaviour, IButton {
     {
         None = 0,
         Hinge,
-        Fixed
+        Fixed,
+        EndEffector
     }
     //  Joint Type에 따라 Joint의 색상을 바꿀거임.
     public Material[] m_matOfJoint = new Material[3];
     public JointType m_jointType = JointType.None;
 
+    //  이 Joint가 속해있는 Link
     public BP_Link m_parentLink;
 
     //  Joint로 묶인 오브젝트
@@ -57,32 +59,41 @@ public class BP_Joint : MonoBehaviour, IButton {
         }
     }
 
-    public void updateAllJointBfPosition()
+    public virtual void updateAllJointBfPosition()
     {
         bf_position = this.transform.position;
+
+        //  End Effector Joint는 부모 링크가 없는 Joint라서 필요없다.
+        if (m_jointType == JointType.EndEffector)
+            return;
+
         foreach (BP_Joint joint in m_parentLink.m_childJointList)
         {
             joint.bf_position = joint.transform.position;
-            foreach (BP_Joint eaJoint in joint.m_parentLink.m_childJointList)
-                eaJoint.bf_position = eaJoint.transform.position;
+            //  End Effector Joint는 부모 링크가 없는 Joint라서 필요없다.
+            if (!(joint.m_jointType == JointType.EndEffector))
+            {
+                foreach (BP_Joint eaJoint in joint.m_parentLink.m_childJointList)
+                {
+                    eaJoint.bf_position = eaJoint.transform.position;
+                }
+            }
         }
     }
 
-    public void getDownInput(Vector3 hitPoint)
+    public virtual void getDownInput(Vector3 hitPoint)
     {
         //  Joint 위치 이동 전 초기 위치 저장
         updateAllJointBfPosition();
     }
 
-    public void getMotion(Vector3 rayDir, Transform camera)
+    public virtual void getMotion(Vector3 rayDir, Transform camera)
     {
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
         MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-
-        //  만약 이 Joint를 움직인다면 Link가 움직이면서 Link에 연결된 다른 Joint들도 움직여야 한다.
-
-        this.transform.position = hitTransform.position;
         
+        //  Joint의 위치 변경
+        this.transform.position = hitTransform.position;
         updateJointPos();
     }
 
@@ -90,10 +101,15 @@ public class BP_Joint : MonoBehaviour, IButton {
     //  그 처리를 위한 작업
     public void updateJointPos()
     {
+        if (!m_parentLink)
+        {
+            print("BP_Joint: Can't find m_parentLink");
+            return;
+        }
+
         m_isPositioning = true;
-
         m_parentLink.UpdatePosition();
-
+        
         //  연결된 조인트들에서
         foreach (BP_Joint joint in m_parentLink.m_childJointList)
         {
@@ -113,9 +129,9 @@ public class BP_Joint : MonoBehaviour, IButton {
         }
     }
 
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    public virtual void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
-        //코드개더럽내
+        //코드개더럽
 
         //  Joint 위치 이동 끝났으니 초기 위치 다시 저장
         updateAllJointBfPosition();
@@ -178,6 +194,12 @@ public class BP_Joint : MonoBehaviour, IButton {
     public void getUpInput(Vector3 hitPoint)
     {
         
+    }
+
+    public virtual void deleteSelf()
+    {
+        m_attachedObj = null;
+        setJointType(BP_Joint.JointType.None);
     }
 
     // Use this for initialization

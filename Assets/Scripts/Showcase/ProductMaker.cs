@@ -36,6 +36,7 @@ public class ProductMaker : MonoBehaviour, IButton {
 
         makeAllGear(tr_bp, tr_sc);
         makeAllLink(tr_bp, tr_sc);
+        makeAllEndEffector(tr_bp, tr_sc);
     }
 
     private MyTransform blueprint2Showcase(MyTransform tr_origin, MyTransform tr_bp, Transform tr_sc)
@@ -82,6 +83,18 @@ public class ProductMaker : MonoBehaviour, IButton {
                 tr_realGear.GetComponent<Gear>().m_myBPGear = bp_gear;
                 //print("real gear: " + tr_realGear.position.ToString("F4"));
                 tr_realGear.position += tr_ret.position;
+                switch (bp_gear.m_gearType)
+                {
+                    case GearType.Small:
+                        tr_realGear.localScale = new Vector3(0.2f, 0.01f, 0.2f);
+                        break;
+                    case GearType.Medium:
+                        tr_realGear.localScale = new Vector3(0.3f, 0.01f, 0.3f);
+                        break;
+                    case GearType.Large:
+                        tr_realGear.localScale = new Vector3(0.4f, 0.01f, 0.4f);
+                        break;
+                }
 
                 HingeJoint hinge = tr_realGear.gameObject.AddComponent<HingeJoint>();
                 hinge.anchor = new Vector3(0, 0, 0);
@@ -124,28 +137,65 @@ public class ProductMaker : MonoBehaviour, IButton {
 
             //  Joint의 종류, joint의 attached_obj의 유무에 따라 적절한 Joint component 붙임
             Link link = Instantiate(m_realLink).GetComponent<Link>();
-            link.transform.position = pos_ret + FindObjectOfType<Showcase>().transform.forward * -0.01f;
-            link.transform.rotation = rot_ret;
+            link.transform.position = pos_ret + FindObjectOfType<Showcase>().transform.forward * -0.02f;
+            link.transform.rotation = Quaternion.Euler(0, 0, rot_ret.eulerAngles.z);
             link.transform.localScale = new Vector3(len, m_realLink.transform.localScale.y,
                 m_realLink.transform.localScale.z);
             //  실제 Link에 Blueprint 정보를 넣어놓자
             link.m_myBPLink = bp_link;
             link.m_myBPStartJoint = bp_link.m_startJoint;
             link.m_myBPEndJoint = bp_link.m_endJoint;
-
-            if (bp_link.m_endJoint.m_jointType == BP_Joint.JointType.None)
-            {
-                Transform endeffector = Instantiate(m_endeffector).transform;
-                endeffector.position = pos_eJoint;
-                endeffector.SetParent(link.transform);
-                endeffector.transform.localScale = new Vector3(
-                    endeffector.transform.localScale.x / link.transform.localScale.x,
-                    endeffector.transform.localScale.y / link.transform.localScale.y,
-                    endeffector.transform.localScale.z / link.transform.localScale.z);
-            }
         }
 
         connectAllJoints();
+    }
+
+    private void makeAllEndEffector(MyTransform tr_bp, Transform tr_sc)
+    {
+        foreach (EndEffector ef in FindObjectsOfType<EndEffector>())
+        {
+            Destroy(ef.gameObject);
+        }
+
+        foreach (Link link in FindObjectsOfType<Link>())
+        {
+            foreach(BP_Joint bp_joint in link.m_myBPLink.m_childJointList)
+            {
+                if(bp_joint.m_jointType == BP_Joint.JointType.EndEffector)
+                {
+                    MyTransform tr_ef = new MyTransform(bp_joint.transform.position, bp_joint.transform.rotation);
+                    MyTransform tr_ret = blueprint2Showcase(tr_ef, tr_bp, tr_sc);
+
+                    Transform endeffector = Instantiate(m_endeffector).transform;
+                    endeffector.position = tr_ret.position;
+                    endeffector.SetParent(link.transform);
+                    endeffector.transform.localScale = new Vector3(
+                        m_endeffector.transform.localScale.x,
+                        m_endeffector.transform.localScale.y,
+                        m_endeffector.transform.localScale.z);
+                }
+            }
+        }
+
+        foreach (Gear gear in FindObjectsOfType<Gear>())
+        {
+            foreach (BP_Joint bp_joint in gear.m_myBPGear.m_childJointList)
+            {
+                if (bp_joint.m_jointType == BP_Joint.JointType.EndEffector)
+                {
+                    MyTransform tr_ef = new MyTransform(bp_joint.transform.position, bp_joint.transform.rotation);
+                    MyTransform tr_ret = blueprint2Showcase(tr_ef, tr_bp, tr_sc);
+
+                    Transform endeffector = Instantiate(m_endeffector).transform;
+                    endeffector.position = tr_ret.position;
+                    endeffector.SetParent(gear.transform);
+                    endeffector.transform.localScale = new Vector3(
+                        m_endeffector.transform.localScale.x,
+                        m_endeffector.transform.localScale.y,
+                        m_endeffector.transform.localScale.z);
+                }
+            }
+        }
     }
 
     private void connectWithGear(Link link, Gear gear, BP_Joint joint, bool isStart)
@@ -161,7 +211,6 @@ public class ProductMaker : MonoBehaviour, IButton {
                     hinge.anchor = new Vector3(0.5f, 0, 0);
                 hinge.axis = new Vector3(0, 0, 1);
                 hinge.connectedBody = gear.GetComponent<Rigidbody>();
-                print("Gear 됏다");
             }
         }
     }
@@ -179,7 +228,6 @@ public class ProductMaker : MonoBehaviour, IButton {
                     hinge.anchor = new Vector3(0.5f, 0, 0);
                 hinge.axis = new Vector3(0, 0, 1);
                 hinge.connectedBody = connectedLink.GetComponent<Rigidbody>();
-                print("Link 됏다");
             }
         }
     }

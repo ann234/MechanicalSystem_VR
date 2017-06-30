@@ -60,12 +60,15 @@ public class BP_AddGear : MonoBehaviour, IButton
             {
                 case GearType.Small:
                     newGear.localScale = new Vector3(0.2f, 0.2f, 0.2f);
+                    newGear.GetComponent<BP_Gear>().m_gearType = GearType.Small;
                     break;
                 case GearType.Medium:
                     newGear.localScale = new Vector3(0.3f, 0.3f, 0.3f);
+                    newGear.GetComponent<BP_Gear>().m_gearType = GearType.Medium;
                     break;
                 case GearType.Large:
                     newGear.localScale = new Vector3(0.4f, 0.4f, 0.4f);
+                    newGear.GetComponent<BP_Gear>().m_gearType = GearType.Large;
                     break;
             }
             newGear.GetComponent<BP_Gear>().setPosition(m_Blueprint.transform.position);

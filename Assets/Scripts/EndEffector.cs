@@ -4,11 +4,15 @@ using System.Collections.Generic;
 
 public class EndEffector : MonoBehaviour {
     
-    public GameObject prefab;
     private List<GameObject> lineList;
     
     //  기어 회전 on/off
-    public bool isRotate = false;
+    private bool isRotate = false;
+    public bool IsRotate
+    {
+        get { return isRotate; }
+        set { isRotate = value; }
+    }
     private int currentIndex = 0;
 
     private float rot_before;
@@ -25,18 +29,6 @@ public class EndEffector : MonoBehaviour {
             GetComponent<LineRenderer>().SetPosition(i, transform.position);
 
         //makePathes();
-    }
-
-    void makePathes()
-    {
-        lineList = new List<GameObject>();
-        for (int i = 0; i < 24; i++)
-        {
-            GameObject gObj_line = Instantiate(prefab);
-
-            lineList.Add(gObj_line);
-            gObj_line.SetActive(false);
-        }
     }
 	
 	// Update is called once per frame

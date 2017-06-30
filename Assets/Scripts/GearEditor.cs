@@ -29,14 +29,14 @@ public class GearEditor : MechanicEditor
             }
             foreach(EndEffector ef in GameObject.FindObjectsOfType<EndEffector>())
             {
-                ef.isRotate = true;
+                ef.IsRotate = true;
             }
         }
         else
         {
             foreach (EndEffector ef in GameObject.FindObjectsOfType<EndEffector>())
             {
-                ef.isRotate = false;
+                ef.IsRotate = false;
             }
         }
     }

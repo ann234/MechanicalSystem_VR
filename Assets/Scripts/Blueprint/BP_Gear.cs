@@ -14,6 +14,8 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
         set { transform.localScale = new Vector3(value, value, 0); }
     }
+    //  위에꺼 안쓸듯
+    public GearType m_gearType = GearType.Large;
 
     private float m_connectionAngle = 0;
     public float m_ConnectionAngle
