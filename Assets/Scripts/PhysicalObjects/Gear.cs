@@ -3,6 +3,8 @@ using System.Collections;
 
 public class Gear : MonoBehaviour {
 
+    public float m_velocity = 0.2f;
+
     private float m_radius;
     public float m_Radius
     {
@@ -37,9 +39,9 @@ public class Gear : MonoBehaviour {
             if (rot_current > 360.0f)
                 rot_current = 0;
             if(isLeft)
-                rot_current += 360.0f * Time.deltaTime * 0.2f / m_radius;
+                rot_current += 360.0f * Time.deltaTime * m_velocity / m_radius;
             else
-                rot_current -= 360.0f * Time.deltaTime * 0.2f / m_radius;
+                rot_current -= 360.0f * Time.deltaTime * m_velocity / m_radius;
             this.transform.eulerAngles = new Vector3(rot_current, -90, -90);
 
             //  use rotate

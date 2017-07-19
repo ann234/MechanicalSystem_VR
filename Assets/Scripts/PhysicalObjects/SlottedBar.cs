@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BP_Link : BP_BaseLink {
+public class SlottedBar : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {

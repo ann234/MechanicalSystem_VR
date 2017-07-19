@@ -97,7 +97,6 @@ public class LinkEditor : MechanicEditor
             }
 
             //  최종 링크 생성
-            temp_link.m_link = link;
             temp_link.m_joints[0].GetComponent<MeshRenderer>().enabled = false;
             temp_link.m_joints[1].GetComponent<MeshRenderer>().enabled = false;
             Destroy(temp_link.m_joints[0].GetComponent<Collider>());

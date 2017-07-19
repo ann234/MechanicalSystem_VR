@@ -22,13 +22,13 @@ public class BP_DeleteManager : MonoBehaviour {
             Destroy(target.gameObject);
         }
         //  Link를 지우려는 경우
-        else if (deleteObj.GetComponent<BP_Link>() || deleteObj.GetComponent<BP_Joint>())
+        else if (deleteObj.GetComponent<BP_BaseLink>() || deleteObj.GetComponent<BP_Joint>())
         {
-            BP_Link target;
+            BP_BaseLink target;
             //  Link를 선택한 경우
-            if (deleteObj.GetComponent<BP_Link>())
+            if (deleteObj.GetComponent<BP_BaseLink>())
             {
-                target = deleteObj.GetComponent<BP_Link>();
+                target = deleteObj.GetComponent<BP_BaseLink>();
                 //  Link에 붙어있는 모든 Joint들의 attached_obj를 해제
             }
             else
@@ -47,9 +47,9 @@ public class BP_DeleteManager : MonoBehaviour {
             if(target.m_startJoint.m_attachedObj)
             {
                 attachedObj = target.m_startJoint.m_attachedObj;
-                if (attachedObj.GetComponent<BP_Link>())
+                if (attachedObj.GetComponent<BP_BaseLink>())
                 {
-                    attachedObj.GetComponent<BP_Link>().m_childJointList.Remove(target.m_startJoint);
+                    attachedObj.GetComponent<BP_BaseLink>().m_childJointList.Remove(target.m_startJoint);
                 }
                 else if (attachedObj.GetComponent<BP_Gear>())
                 {
@@ -59,9 +59,9 @@ public class BP_DeleteManager : MonoBehaviour {
             if (target.m_endJoint.m_attachedObj)
             {
                 attachedObj = target.m_endJoint.m_attachedObj;
-                if (attachedObj.GetComponent<BP_Link>())
+                if (attachedObj.GetComponent<BP_BaseLink>())
                 {
-                    attachedObj.GetComponent<BP_Link>().m_childJointList.Remove(target.m_endJoint);
+                    attachedObj.GetComponent<BP_BaseLink>().m_childJointList.Remove(target.m_endJoint);
                 }
                 else if (attachedObj.GetComponent<BP_Gear>())
                 {

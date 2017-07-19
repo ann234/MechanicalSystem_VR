@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BP_Link : BP_BaseLink {
+using System;
 
-	// Use this for initialization
-	void Start () {
+public class BP_SlottedBar : BP_BaseLink {
+
+    // Use this for initialization
+    void Start () {
 		
 	}
 	

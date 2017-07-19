@@ -5,7 +5,6 @@ using UnityEngine;
 public class Link : MonoBehaviour {
 
     public Transform[] m_joints = new Transform[2];
-    public Transform m_link;
 
     public BP_Link m_myBPLink;
     public BP_Joint m_myBPStartJoint;
@@ -13,10 +12,9 @@ public class Link : MonoBehaviour {
 
     public Link() { }
 
-    public Link(Transform[] joints, Transform link)
+    public Link(Transform[] joints)
     {
         m_joints = joints;
-        m_link = link;
     }
 
     // Use this for initialization

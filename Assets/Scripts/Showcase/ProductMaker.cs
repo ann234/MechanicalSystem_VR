@@ -12,6 +12,10 @@ public class ProductMaker : MonoBehaviour, IButton {
     [SerializeField]
     private GameObject m_realLink;
     [SerializeField]
+    private GameObject m_realJoint;
+    [SerializeField]
+    private GameObject m_realSlottedBar;
+    [SerializeField]
     private EndEffector m_endeffector;
 
     private bool m_onShowcase = false;
@@ -34,9 +38,11 @@ public class ProductMaker : MonoBehaviour, IButton {
         //  Showcase의 transform 가져옴
         Transform tr_sc = GameObject.Find("Showcase").transform;
 
+        destroyAllObjects();
         makeAllGear(tr_bp, tr_sc);
         makeAllLink(tr_bp, tr_sc);
         makeAllEndEffector(tr_bp, tr_sc);
+        makeAllSlottedBar(tr_bp, tr_sc);
     }
 
     private MyTransform blueprint2Showcase(MyTransform tr_origin, MyTransform tr_bp, Transform tr_sc)
@@ -63,11 +69,6 @@ public class ProductMaker : MonoBehaviour, IButton {
 
     private void makeAllGear(MyTransform tr_bp, Transform tr_sc)
     {
-        foreach (Gear bf_gear in FindObjectsOfType<Gear>())
-        {
-            Destroy(bf_gear.gameObject);
-        }
-
         foreach (BP_Gear bp_gear in FindObjectsOfType<BP_Gear>())
         {
             MyTransform tr_gear = new MyTransform(bp_gear.transform.position, bp_gear.transform.rotation);
@@ -109,10 +110,6 @@ public class ProductMaker : MonoBehaviour, IButton {
 
     private void makeAllLink(MyTransform tr_bp, Transform tr_sc)
     {
-        //  이전 링크들 전부 삭제
-        foreach(Link link in FindObjectsOfType<Link>())
-            Destroy(link.gameObject);
-
         //  모든 블루프린트 링크를 불러옴
         foreach (BP_Link bp_link in FindObjectsOfType<BP_Link>())
         {
@@ -134,10 +131,9 @@ public class ProductMaker : MonoBehaviour, IButton {
             //  rotation
             Quaternion rot_ret = Quaternion.FromToRotation(FindObjectOfType<Showcase>().transform.right,
             (new Vector3(pos_eJoint.x, pos_eJoint.y, pos_eJoint.z) - new Vector3(pos_sJoint.x, pos_sJoint.y, pos_sJoint.z)).normalized);
-
-            //  Joint의 종류, joint의 attached_obj의 유무에 따라 적절한 Joint component 붙임
-            Link link = Instantiate(m_realLink).GetComponent<Link>();
-            link.transform.position = pos_ret + FindObjectOfType<Showcase>().transform.forward * -0.02f;
+            
+            Link link = Instantiate(m_realLink).GetComponentInChildren<Link>();
+            link.transform.position = pos_ret;// + FindObjectOfType<Showcase>().transform.forward * -0.02f;
             link.transform.rotation = Quaternion.Euler(0, 0, rot_ret.eulerAngles.z);
             link.transform.localScale = new Vector3(len, m_realLink.transform.localScale.y,
                 m_realLink.transform.localScale.z);
@@ -147,16 +143,11 @@ public class ProductMaker : MonoBehaviour, IButton {
             link.m_myBPEndJoint = bp_link.m_endJoint;
         }
 
-        connectAllJoints();
+        connectAllJoints(tr_bp, tr_sc);
     }
 
     private void makeAllEndEffector(MyTransform tr_bp, Transform tr_sc)
     {
-        foreach (EndEffector ef in FindObjectsOfType<EndEffector>())
-        {
-            Destroy(ef.gameObject);
-        }
-
         foreach (Link link in FindObjectsOfType<Link>())
         {
             foreach(BP_Joint bp_joint in link.m_myBPLink.m_childJointList)
@@ -167,7 +158,7 @@ public class ProductMaker : MonoBehaviour, IButton {
                     MyTransform tr_ret = blueprint2Showcase(tr_ef, tr_bp, tr_sc);
 
                     Transform endeffector = Instantiate(m_endeffector).transform;
-                    endeffector.position = tr_ret.position;
+                    endeffector.position = tr_ret.position + tr_sc.forward * -0.01f;
                     endeffector.SetParent(link.transform);
                     endeffector.transform.localScale = new Vector3(
                         m_endeffector.transform.localScale.x,
@@ -187,7 +178,7 @@ public class ProductMaker : MonoBehaviour, IButton {
                     MyTransform tr_ret = blueprint2Showcase(tr_ef, tr_bp, tr_sc);
 
                     Transform endeffector = Instantiate(m_endeffector).transform;
-                    endeffector.position = tr_ret.position;
+                    endeffector.position = tr_ret.position + tr_sc.forward * -0.01f;
                     endeffector.SetParent(gear.transform);
                     endeffector.transform.localScale = new Vector3(
                         m_endeffector.transform.localScale.x,
@@ -196,6 +187,61 @@ public class ProductMaker : MonoBehaviour, IButton {
                 }
             }
         }
+    }
+
+    private void makeAllSlottedBar(MyTransform tr_bp, Transform tr_sc)
+    {
+        //  모든 블루프린트 Slotted Bar를 불러옴
+        foreach (BP_SlottedBar bp_slottedBar in FindObjectsOfType<BP_SlottedBar>())
+        {
+            //  start, end joint 위치에 따라 실제 Slotted Bar 생성
+
+            //  Transform
+            print(bp_slottedBar.transform.position);
+            MyTransform tr_bp_center = new MyTransform(bp_slottedBar.transform.position, bp_slottedBar.transform.rotation);
+            MyTransform tr_center = blueprint2Showcase(tr_bp_center, tr_bp, tr_sc);
+
+            Transform slottedBar = Instantiate(m_realSlottedBar).transform;
+            slottedBar.position = tr_center.position;
+            print(tr_center.position);
+            slottedBar.rotation = tr_center.rotation;
+            slottedBar.localScale.Set(bp_slottedBar.transform.localScale.x, slottedBar.localScale.y, slottedBar.localScale.z);
+
+            //  실제 Slotted Bar에 Blueprint 정보도 넣자
+        }
+    }
+
+    //  시뮬레이션 On/Off시 Blueprint위치 변경을 위해
+    private void updownBPObject(bool isSimulationOn)
+    {
+        Vector3 ratio;
+        if(isSimulationOn)
+            ratio = new Vector3(0, -1.25f, 0);
+        else
+            ratio = new Vector3(0, 1.25f, 0);
+
+        GameObject.Find("ResultPanel").transform.position += ratio;
+        foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
+            gear.transform.position += ratio;
+        foreach (BP_Link link in FindObjectsOfType<BP_Link>())
+            link.transform.position += ratio;
+        foreach (BP_Joint joint in FindObjectsOfType<BP_Joint>())
+            joint.transform.position += ratio;
+        foreach (BP_SlottedBar slottedBar in FindObjectsOfType<BP_SlottedBar>())
+            slottedBar.transform.position += ratio;
+    }
+
+    //  Showcase의 실제 물리 오브젝트 전부 파괴
+    private void destroyAllObjects()
+    {
+        foreach (Gear gear in FindObjectsOfType<Gear>())
+            Destroy(gear.gameObject);
+        foreach (Link link in FindObjectsOfType<Link>())
+            Destroy(link.gameObject);
+        foreach (SimJoint simJoint in FindObjectsOfType<SimJoint>())
+            Destroy(simJoint.gameObject);
+        foreach (SlottedBar slottedBar in FindObjectsOfType<SlottedBar>())
+            Destroy(slottedBar.gameObject);
     }
 
     private void connectWithGear(Link link, Gear gear, BP_Joint joint, bool isStart)
@@ -232,9 +278,9 @@ public class ProductMaker : MonoBehaviour, IButton {
         }
     }
 
-    private void connectAllJoints()
+    private void connectAllJoints(MyTransform tr_bp, Transform tr_sc)
     {
-        //  모든 블루프린트 링크를 불러옴
+        #region 모든 링크를 불러와 Joint를 부착
         foreach (Link link in FindObjectsOfType<Link>())
         {
             BP_Joint startJoint = link.m_myBPStartJoint;
@@ -307,13 +353,36 @@ public class ProductMaker : MonoBehaviour, IButton {
                 case BP_Joint.JointType.Fixed:
                     break;
             }
+
+            #region Start, end joint 모델 생성 코드
+            //  먼저 joint의 위치를 얻기 위해 Blueprint의 Start, end joint의 transform을 가지고 와서 showcase 위치로 변환
+            MyTransform tr_bf_sj = new MyTransform(startJoint.transform.position, startJoint.transform.rotation);
+            MyTransform tr_bf_ej = new MyTransform(endJoint.transform.position, endJoint.transform.rotation);
+            MyTransform tr_startJoint = blueprint2Showcase(tr_bf_sj, tr_bp, tr_sc);
+            MyTransform tr_endJoint = blueprint2Showcase(tr_bf_ej, tr_bp, tr_sc);
+
+            //  Joint 생성
+            GameObject gObj_startJoint = Instantiate(m_realJoint);
+            GameObject gObj_endJoint = Instantiate(m_realJoint);
+            //  위에서 구한 joint의 위치를 적용
+            gObj_startJoint.transform.position = tr_startJoint.position;
+            gObj_endJoint.transform.position = tr_endJoint.position;
+            //  Joint에 Fixed joint component 추가 후 속한 Link에 connectedBody로 하여 Joint를 부착함
+            FixedJoint fj_sj = gObj_startJoint.AddComponent<FixedJoint>();
+            FixedJoint fj_ej = gObj_endJoint.AddComponent<FixedJoint>();
+            fj_sj.connectedBody = link.GetComponent<Rigidbody>();
+            fj_ej.connectedBody = link.GetComponent<Rigidbody>();
+            #endregion
         }
+        #endregion
     }
 
+    //  사용 안함
     public void getDownInput(Vector3 hitPoint)
     {
     }
 
+    //  사용 안함
     public void getUpInput(Vector3 hitPoint)
     {
     }
@@ -321,35 +390,18 @@ public class ProductMaker : MonoBehaviour, IButton {
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         m_onShowcase = !m_onShowcase;
+        updownBPObject(m_onShowcase);
         if (m_onShowcase)
         {
-            GameObject.Find("ResultPanel").transform.position -= new Vector3(0, 1.25f, 0);
-            foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
-                gear.transform.position -= new Vector3(0, 1.25f, 0);
-            foreach (BP_Link link in FindObjectsOfType<BP_Link>())
-                link.transform.position -= new Vector3(0, 1.25f, 0);
-            foreach (BP_Joint joint in FindObjectsOfType<BP_Joint>())
-                joint.transform.position -= new Vector3(0, 1.25f, 0);
-
             MakeAllProduct();
         }
         else
         {
-            GameObject.Find("ResultPanel").transform.position += new Vector3(0, 1.25f, 0);
-            foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
-                gear.transform.position += new Vector3(0, 1.25f, 0);
-            foreach (BP_Link link in FindObjectsOfType<BP_Link>())
-                link.transform.position += new Vector3(0, 1.25f, 0);
-            foreach (BP_Joint joint in FindObjectsOfType<BP_Joint>())
-                joint.transform.position += new Vector3(0, 1.25f, 0);
-
-            foreach (Gear gear in FindObjectsOfType<Gear>())
-                Destroy(gear.gameObject);
-            foreach (Link link in FindObjectsOfType<Link>())
-                Destroy(link.gameObject);
+            destroyAllObjects();
         }
     }
 
+    //  사용 안함
     public void getMotion(Vector3 rayDir, Transform camera)
     {
     }

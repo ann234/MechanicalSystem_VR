@@ -14,12 +14,13 @@ public class BP_Joint : MonoBehaviour, IButton {
         Fixed,
         EndEffector
     }
+
     //  Joint Type에 따라 Joint의 색상을 바꿀거임.
     public Material[] m_matOfJoint = new Material[3];
     public JointType m_jointType = JointType.None;
 
     //  이 Joint가 속해있는 Link
-    public BP_Link m_parentLink;
+    public BP_BaseLink m_parentLink;
 
     //  Joint로 묶인 오브젝트
     public GameObject m_attachedObj;
@@ -29,7 +30,7 @@ public class BP_Joint : MonoBehaviour, IButton {
     
     private bool m_isPositioning = false;
 
-    public void Initialize(BP_Link myParent, Vector3 pos)
+    public void Initialize(BP_BaseLink myParent, Vector3 pos)
     {
         Quaternion rot = Quaternion.Euler(FindObjectOfType<Blueprint>().transform.rotation.eulerAngles
             + new Vector3(90, 0, 0));
@@ -191,6 +192,7 @@ public class BP_Joint : MonoBehaviour, IButton {
         return;
     }
 
+    //  사용 안함
     public void getUpInput(Vector3 hitPoint)
     {
         
@@ -198,13 +200,13 @@ public class BP_Joint : MonoBehaviour, IButton {
 
     public virtual void deleteSelf()
     {
-        m_attachedObj = null;
+        if(m_attachedObj != null)
+            m_attachedObj = null;
         setJointType(BP_Joint.JointType.None);
     }
 
     // Use this for initialization
     void Start () {
-		
 	}
 	
 	// Update is called once per frame

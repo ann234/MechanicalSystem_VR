@@ -16,7 +16,16 @@ public struct MyTransform
     }
 }
 
+//  Singleton manager object
 public class BP_InputManager : MonoBehaviour {
+
+    public static BP_InputManager m_Instance
+    {
+        get { return m_instance; }
+    }
+
+    //  static object for singleton
+    private static BP_InputManager m_instance = null;
 
     public enum EditMode
     {
@@ -48,10 +57,23 @@ public class BP_InputManager : MonoBehaviour {
     [SerializeField]
     private GameObject m_prefab_ef;
 
+    void Awake()
+    {
+        if (m_instance)
+        {
+            DestroyImmediate(gameObject);
+            return;
+        }
+
+        m_instance = this;
+
+        //  싱글톤 패턴을 위해
+        DontDestroyOnLoad(gameObject);
+    }
+
     // Use this for initialization
     void Start()
     {
-
     }
 
     // Update is called once per frame
@@ -164,7 +186,8 @@ public class BP_InputManager : MonoBehaviour {
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.Link:
-                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>())
+                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>()
+                            || hitObj.GetComponent<Blueprint>())
                         {
                             FindObjectOfType<BP_LinkEditor>().getDownInput(hitObj.gameObject, hitPoint);
                         }
@@ -192,7 +215,6 @@ public class BP_InputManager : MonoBehaviour {
             }
 
             Ray ray = new Ray(m_Camera.position, m_Camera.forward);
-
             RaycastHit hit;
 
             // Do the raycast forweards to see if we hit an interactive item
@@ -232,29 +254,34 @@ public class BP_InputManager : MonoBehaviour {
                         }
                         break;
                     case EditMode.EndEffector:
-                        if(hitObj)
+                        RaycastHit[] hits = Physics.RaycastAll(ray);
+
+                        foreach (RaycastHit eachHit in hits)
                         {
-                            if(hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_Gear>())
+                            Vector3 eaHitPoint = eachHit.point;
+                            Collider eaHitObj = eachHit.collider;
+                            if (eaHitObj.GetComponent<BP_Link>() || eaHitObj.GetComponent<BP_Gear>())
                             {
                                 Transform ef = Instantiate(m_prefab_ef).transform;
-                                ef.position = hitPoint;
-                                ef.GetComponent<BP_EndEffector>().m_attachedObj = hitObj.gameObject;
-                                if (hitObj.GetComponent<BP_Link>())
+                                ef.position = eaHitPoint;
+                                ef.GetComponent<BP_EndEffector>().m_attachedObj = eaHitObj.gameObject;
+                                if (eaHitObj.GetComponent<BP_Link>())
                                 {
-                                    hitObj.GetComponent<BP_Link>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                                    eaHitObj.GetComponent<BP_Link>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
                                 }
-                                else if (hitObj.GetComponent<BP_Gear>())
+                                else if (eaHitObj.GetComponent<BP_Gear>())
                                 {
-                                    hitObj.GetComponent<BP_Gear>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                                    eaHitObj.GetComponent<BP_Gear>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
                                 }
                             }
-                            else if(hitObj.GetComponent<BP_EndEffector>())
+                            else if (eaHitObj.GetComponent<BP_EndEffector>())
                             {
-                                hitObj.GetComponent<BP_EndEffector>().offEndEffector();
+                                eaHitObj.GetComponent<BP_EndEffector>().offEndEffector();
+                                break;
                             }
                             else if (m_clickedObject.CompareTag("Tool"))
                             {
-                                m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                                m_clickedObject.GetComponent<IButton>().getUpInput(eaHitPoint);
                             }
                         }
                         break;
