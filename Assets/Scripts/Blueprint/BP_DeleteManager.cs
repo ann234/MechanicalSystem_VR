@@ -6,8 +6,32 @@ public class BP_DeleteManager : MonoBehaviour {
 
     public void deleteObject(GameObject deleteObj)
     {
+        //  지우고자 하는 오브젝트가 Shaft인 경우
+        if (deleteObj.GetComponent<BP_Shaft>())
+        {
+            BP_Shaft target = deleteObj.GetComponent<BP_Shaft>();
+            //  Shaft에 붙어있는 모든 Object들을 삭제
+            foreach(GameObject obj in target.m_childObjList)
+            {
+                //  joint의 경우
+                if(obj.GetComponent<BP_Joint>())
+                {
+                    //  Joint와의 연결관계를 해제
+                    obj.GetComponent<BP_Joint>().deleteSelf();
+                }
+                //  Gear의 경우
+                else if(obj.GetComponent<BP_Gear>())
+                {
+                    //  Gear와의 연결관계를 해제
+                    obj.GetComponent<BP_Gear>().deleteSelf();
+                }
+            }
+
+            //  최종적으로 Shaft 삭제
+            Destroy(target.gameObject);
+        }
         //  지우고자 하는 오브젝트가 Gear인 경우
-        if(deleteObj.GetComponent<BP_Gear>())
+        else if (deleteObj.GetComponent<BP_Gear>())
         {
             BP_Gear target = deleteObj.GetComponent<BP_Gear>();
             //  Gear에 붙어있는 모든 Joint들의 attached_obj를 해제

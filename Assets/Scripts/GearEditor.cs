@@ -11,8 +11,6 @@ public class GearEditor : MechanicEditor
 
     public List<Gear> m_gearList = new List<Gear>();
 
-    public bool isSimulateOn = false;
-
     // Use this for initialization
     public override void Start()
     {
@@ -21,24 +19,6 @@ public class GearEditor : MechanicEditor
 
     // Update is called once per frame
     void Update () {
-		if(isSimulateOn)
-        {
-            foreach(Gear gear in FindObjectsOfType<Gear>())
-            {
-                gear.Rotate();
-            }
-            foreach(EndEffector ef in GameObject.FindObjectsOfType<EndEffector>())
-            {
-                ef.IsRotate = true;
-            }
-        }
-        else
-        {
-            foreach (EndEffector ef in GameObject.FindObjectsOfType<EndEffector>())
-            {
-                ef.IsRotate = false;
-            }
-        }
     }
 
     public void getInput(Vector3 hitPoint, GameObject clicked_obj)

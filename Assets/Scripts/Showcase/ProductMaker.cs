@@ -17,6 +17,8 @@ public class ProductMaker : MonoBehaviour, IButton {
     private GameObject m_realSlottedBar;
     [SerializeField]
     private EndEffector m_endeffector;
+    [SerializeField]
+    private Shaft m_realShaft;
 
     private bool m_onShowcase = false;
 
@@ -39,10 +41,14 @@ public class ProductMaker : MonoBehaviour, IButton {
         Transform tr_sc = GameObject.Find("Showcase").transform;
 
         destroyAllObjects();
+        makeAllShaft(tr_bp, tr_sc);
         makeAllGear(tr_bp, tr_sc);
         makeAllLink(tr_bp, tr_sc);
         makeAllEndEffector(tr_bp, tr_sc);
         makeAllSlottedBar(tr_bp, tr_sc);
+
+        connectAllJoints(tr_bp, tr_sc);
+        connectAllGears();
     }
 
     private MyTransform blueprint2Showcase(MyTransform tr_origin, MyTransform tr_bp, Transform tr_sc)
@@ -65,6 +71,33 @@ public class ProductMaker : MonoBehaviour, IButton {
         //print("gear: " + tr_gear.position.ToString("F4"));
 
         return tr_origin;
+    }
+
+    private void makeAllShaft(MyTransform tr_bp, Transform tr_sc)
+    {
+        foreach (BP_Shaft bp_shaft in FindObjectsOfType<BP_Shaft>())
+        {
+            MyTransform tr_shaft = new MyTransform(bp_shaft.transform.position, bp_shaft.transform.rotation);
+            //  Blueprint의 inverse transform을 적용해 위치 초기화
+            //  Blueprint 위 Gear들의 위치는 Z축에서 모두 다르다
+            //  이를 해결하기 위해서는 Blueprint의 중심축의 X축을 회전축으로 하여 BP의 X 회전각 만큼 역회전을 시켜주어야 한다
+            MyTransform tr_ret = blueprint2Showcase(tr_shaft, tr_bp, tr_sc);
+
+            //  Happy ending
+            if (m_realShaft)
+            {
+                Transform tr_realShaft = Instantiate(m_realShaft).transform;
+                tr_realShaft.GetComponent<Shaft>().m_myBPShaft = bp_shaft;
+                //print("real gear: " + tr_realGear.position.ToString("F4"));
+                tr_realShaft.position += tr_ret.position;
+
+                HingeJoint hinge = tr_realShaft.gameObject.AddComponent<HingeJoint>();
+                hinge.anchor = new Vector3(0, 0, 0);
+                hinge.axis = new Vector3(0, 1, 0);
+            }
+            else
+                print("ProductMaker: Can't find realShaft prefab");
+        }
     }
 
     private void makeAllGear(MyTransform tr_bp, Transform tr_sc)
@@ -96,12 +129,6 @@ public class ProductMaker : MonoBehaviour, IButton {
                         tr_realGear.localScale = new Vector3(0.4f, 0.01f, 0.4f);
                         break;
                 }
-
-                HingeJoint hinge = tr_realGear.gameObject.AddComponent<HingeJoint>();
-                hinge.anchor = new Vector3(0, 0, 0);
-                hinge.axis = new Vector3(0, 1, 0);
-
-                tr_realGear.GetComponent<Gear>().isRotate = true;
             }
             else
                 print("ProductMaker: Can't find realGear prefab");
@@ -142,8 +169,6 @@ public class ProductMaker : MonoBehaviour, IButton {
             link.m_myBPStartJoint = bp_link.m_startJoint;
             link.m_myBPEndJoint = bp_link.m_endJoint;
         }
-
-        connectAllJoints(tr_bp, tr_sc);
     }
 
     private void makeAllEndEffector(MyTransform tr_bp, Transform tr_sc)
@@ -197,17 +222,29 @@ public class ProductMaker : MonoBehaviour, IButton {
             //  start, end joint 위치에 따라 실제 Slotted Bar 생성
 
             //  Transform
-            print(bp_slottedBar.transform.position);
             MyTransform tr_bp_center = new MyTransform(bp_slottedBar.transform.position, bp_slottedBar.transform.rotation);
             MyTransform tr_center = blueprint2Showcase(tr_bp_center, tr_bp, tr_sc);
 
             Transform slottedBar = Instantiate(m_realSlottedBar).transform;
             slottedBar.position = tr_center.position;
-            print(tr_center.position);
             slottedBar.rotation = tr_center.rotation;
-            slottedBar.localScale.Set(bp_slottedBar.transform.localScale.x, slottedBar.localScale.y, slottedBar.localScale.z);
+
+            //  SlottedBar의 Left, Right는 놔두고 Up, DownBlock만 Scaling하기 위해
+            Vector3 scaleOfBar = bp_slottedBar.transform.localScale;
+            foreach (Transform block in slottedBar.GetComponentsInChildren<Transform>())
+            {
+                if (block.name == "UpBlock" || block.name == "DownBlock")
+                    block.localScale = new Vector3(scaleOfBar.x, block.localScale.y, block.localScale.z);
+                else if (block.name == "LeftBlock")
+                    block.localPosition = new Vector3(scaleOfBar.x / 2.0f, 0, 0);
+                else if (block.name == "RightBlock")
+                    block.localPosition = new Vector3(-scaleOfBar.x / 2.0f, 0, 0);
+            }
 
             //  실제 Slotted Bar에 Blueprint 정보도 넣자
+            slottedBar.GetComponent<SlottedBar>().m_myBPLink = bp_slottedBar;
+            slottedBar.GetComponent<SlottedBar>().m_myBPStartJoint = bp_slottedBar.m_startJoint;
+            slottedBar.GetComponent<SlottedBar>().m_myBPEndJoint = bp_slottedBar.m_endJoint;
         }
     }
 
@@ -220,6 +257,7 @@ public class ProductMaker : MonoBehaviour, IButton {
         else
             ratio = new Vector3(0, 1.25f, 0);
 
+        //  이거 나중에 일일히 type으로 하지 말고 tag로 바꿔서 처리하자
         GameObject.Find("ResultPanel").transform.position += ratio;
         foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
             gear.transform.position += ratio;
@@ -229,6 +267,8 @@ public class ProductMaker : MonoBehaviour, IButton {
             joint.transform.position += ratio;
         foreach (BP_SlottedBar slottedBar in FindObjectsOfType<BP_SlottedBar>())
             slottedBar.transform.position += ratio;
+        foreach (BP_Shaft shaft in FindObjectsOfType<BP_Shaft>())
+            shaft.transform.position += ratio;
     }
 
     //  Showcase의 실제 물리 오브젝트 전부 파괴
@@ -242,21 +282,99 @@ public class ProductMaker : MonoBehaviour, IButton {
             Destroy(simJoint.gameObject);
         foreach (SlottedBar slottedBar in FindObjectsOfType<SlottedBar>())
             Destroy(slottedBar.gameObject);
+        foreach (Shaft shaft in FindObjectsOfType<Shaft>())
+            Destroy(shaft.gameObject);
     }
 
-    private void connectWithGear(Link link, Gear gear, BP_Joint joint, bool isStart)
+    //  Link에 HingeJoint Component를 부착할 때 사용
+    //  isStart는 Link의 joint가 start인지 end인지 여부
+    private void addHingeComponentInLink(Link link, GameObject connectedObj, BP_Joint joint, bool isStart)
     {
-        foreach (BP_Joint bp_joint in gear.m_myBPGear.m_childJointList)
+        HingeJoint hinge = link.gameObject.AddComponent<HingeJoint>();
+        if (isStart)
+            hinge.anchor = new Vector3(-0.5f, 0, 0);
+        else
+            hinge.anchor = new Vector3(0.5f, 0, 0);
+        hinge.axis = new Vector3(0, 0, 1);
+        if(connectedObj != null)
+            hinge.connectedBody = connectedObj.GetComponent<Rigidbody>();
+    }
+
+    //  Link에 FixedJoint Component를 부착할 때 사용
+    private void addFixComponentInLink(Link link, GameObject connectedObj, BP_Joint joint, bool isStart)
+    {
+        FixedJoint fix = link.gameObject.AddComponent<FixedJoint>();
+        if (connectedObj != null)
+            fix.connectedBody = connectedObj.GetComponent<Rigidbody>();
+    }
+
+    //  Gear에 FixedJoint Component를 부착할 때 사용
+    private void addFixComponentInGear(Gear gear, GameObject connectedObj)
+    {
+        FixedJoint fix = gear.gameObject.AddComponent<FixedJoint>();
+        if (connectedObj != null)
+            fix.connectedBody = connectedObj.GetComponent<Rigidbody>();
+    }
+
+    //  Shaft와 Joint를 연결해주는 함수
+    private void connectWithShaft(Link link, Shaft connectedShaft, BP_Joint joint, bool isStart)
+    {
+        foreach (GameObject obj in connectedShaft.m_myBPShaft.m_childObjList)
+        {
+            if(obj.GetComponent<BP_Joint>())
+            {
+                BP_Joint bp_joint = obj.GetComponent<BP_Joint>();
+                if (joint == bp_joint)
+                {
+                    switch (joint.m_jointType)
+                    {
+                        case BP_Joint.JointType.None:
+                            break;
+                        case BP_Joint.JointType.Hinge:
+                            addHingeComponentInLink(link, connectedShaft.gameObject, joint, isStart);
+                            break;
+                        case BP_Joint.JointType.Fixed:
+                            addFixComponentInLink(link, connectedShaft.gameObject, joint, isStart);
+                            break;
+                    }
+                }
+            }
+        }
+    }
+
+    //  Shaft와 Gear를 연결해주는 함수
+    private void connectWithShaft(Gear gear, Shaft connectedShaft)
+    {
+        foreach (GameObject obj in connectedShaft.m_myBPShaft.m_childObjList)
+        {
+            if (obj.GetComponent<BP_Gear>())
+            {
+                BP_Gear bp_gear = obj.GetComponent<BP_Gear>();
+                if (gear.m_myBPGear == bp_gear)
+                {
+                    addFixComponentInGear(gear, connectedShaft.gameObject);
+                }
+            }
+        }
+    }
+
+    private void connectWithGear(Link link, Gear connectedGear, BP_Joint joint, bool isStart)
+    {
+        foreach (BP_Joint bp_joint in connectedGear.m_myBPGear.m_childJointList)
         {
             if (joint == bp_joint)
             {
-                HingeJoint hinge = link.gameObject.AddComponent<HingeJoint>();
-                if(isStart)
-                    hinge.anchor = new Vector3(-0.5f, 0, 0);
-                else
-                    hinge.anchor = new Vector3(0.5f, 0, 0);
-                hinge.axis = new Vector3(0, 0, 1);
-                hinge.connectedBody = gear.GetComponent<Rigidbody>();
+                switch(joint.m_jointType)
+                {
+                    case BP_Joint.JointType.None:
+                        break;
+                    case BP_Joint.JointType.Hinge:
+                        addHingeComponentInLink(link, connectedGear.gameObject, joint, isStart);
+                        break;
+                    case BP_Joint.JointType.Fixed:
+                        addFixComponentInLink(link, connectedGear.gameObject, joint, isStart);
+                        break;
+                }
             }
         }
     }
@@ -267,114 +385,186 @@ public class ProductMaker : MonoBehaviour, IButton {
         {
             if (joint == bp_joint)
             {
-                HingeJoint hinge = link.gameObject.AddComponent<HingeJoint>();
-                if (isStart)
-                    hinge.anchor = new Vector3(-0.5f, 0, 0);
-                else
-                    hinge.anchor = new Vector3(0.5f, 0, 0);
-                hinge.axis = new Vector3(0, 0, 1);
-                hinge.connectedBody = connectedLink.GetComponent<Rigidbody>();
+                switch (joint.m_jointType)
+                {
+                    case BP_Joint.JointType.None:
+                        break;
+                    case BP_Joint.JointType.Hinge:
+                        addHingeComponentInLink(link, connectedLink.gameObject, joint, isStart);
+                        break;
+                    case BP_Joint.JointType.Fixed:
+                        addFixComponentInLink(link, connectedLink.gameObject, joint, isStart);
+                        break;
+                }
             }
         }
     }
 
     private void connectAllJoints(MyTransform tr_bp, Transform tr_sc)
     {
-        #region 모든 링크를 불러와 Joint를 부착
+        #region 모든 링크를 불러와 Joint를 부착 그리고 joint에 물리적 특성(hinge, fixed) 부여
         foreach (Link link in FindObjectsOfType<Link>())
         {
             BP_Joint startJoint = link.m_myBPStartJoint;
             BP_Joint endJoint = link.m_myBPEndJoint;
 
-            if(startJoint == null && endJoint == null)
+            if (startJoint == null && endJoint == null)
             {
                 print("ProductMaker: Can't find link's joints");
                 return;
             }
-            switch (startJoint.m_jointType)
+
+            //  start joint가 특정 오브젝트와 연결되어 있는 경우
+            if (startJoint.m_attachedObj)
             {
-                case BP_Joint.JointType.None:
-                    break;
-                case BP_Joint.JointType.Hinge:
-                    if(startJoint.m_attachedObj.GetComponent<BP_Gear>())
+                //  연결된 오브젝트가 Shaft인 경우
+                if(startJoint.m_attachedObj.GetComponent<BP_Shaft>())
+                {
+                    foreach (Shaft shaft in FindObjectsOfType<Shaft>())
                     {
-                        foreach (Gear gear in FindObjectsOfType<Gear>())
+                        if (shaft.m_myBPShaft)
                         {
-                            if (gear.m_myBPGear)
-                            {
-                                connectWithGear(link, gear, startJoint, true);
-                                //break;
-                            }
+                            connectWithShaft(link, shaft, startJoint, true);
+                            //break;
                         }
                     }
-                    else if (startJoint.m_attachedObj.GetComponent<BP_Link>())
+                }
+                //  연결된 오브젝트가 Gear인 경우
+                else if (startJoint.m_attachedObj.GetComponent<BP_Gear>())
+                {
+                    foreach (Gear gear in FindObjectsOfType<Gear>())
                     {
-                        foreach (Link otherLink in FindObjectsOfType<Link>())
+                        if (gear.m_myBPGear)
                         {
-                            if (otherLink.m_myBPLink)
-                            {
-                                connectWithLink(link, otherLink, startJoint, true);
-                                //break;
-                            }
+                            connectWithGear(link, gear, startJoint, true);
+                            //break;
                         }
                     }
-                    break;
-                case BP_Joint.JointType.Fixed:
-                    break;
+                }
+                //  연결된 오브젝트가 Link인 경우
+                else if (startJoint.m_attachedObj.GetComponent<BP_BaseLink>())
+                {
+                    foreach (Link otherLink in FindObjectsOfType<Link>())
+                    {
+                        if (otherLink.m_myBPLink)
+                        {
+                            connectWithLink(link, otherLink, startJoint, true);
+                            //break;
+                        }
+                    }
+                }
             }
-            switch (endJoint.m_jointType)
+            //  아무 오브젝트와도 연결되어있지 않은 경우 Blueprint에 부착되었다고 해석
+            else
             {
-                case BP_Joint.JointType.None:
-                    break;
-                case BP_Joint.JointType.Hinge:
-                    if (endJoint.m_attachedObj.GetComponent<BP_Gear>())
+                switch (startJoint.m_jointType)
+                {
+                    case BP_Joint.JointType.None:
+                        break;
+                    case BP_Joint.JointType.Hinge:
+                        addHingeComponentInLink(link, null, startJoint, true);
+                        break;
+                    case BP_Joint.JointType.Fixed:
+                        addFixComponentInLink(link, null, startJoint, true);
+                        break;
+                }
+            }
+            //  end joint도 start joint와 마찬가지로 처리
+            if (endJoint.m_attachedObj)
+            {
+                if (endJoint.m_attachedObj.GetComponent<BP_Gear>())
+                {
+                    foreach (Gear gear in FindObjectsOfType<Gear>())
                     {
-                        foreach (Gear gear in FindObjectsOfType<Gear>())
+                        if (gear.m_myBPGear)
                         {
-                            if (gear.m_myBPGear)
-                            {
-                                connectWithGear(link, gear, endJoint, false);
-                                //break;
-                            }
+                            connectWithGear(link, gear, endJoint, false);
+                            //break;
                         }
                     }
-                    else if (endJoint.m_attachedObj.GetComponent<BP_Link>())
+                }
+                else if (endJoint.m_attachedObj.GetComponent<BP_BaseLink>())
+                {
+                    foreach (Link otherLink in FindObjectsOfType<Link>())
                     {
-                        foreach (Link otherLink in FindObjectsOfType<Link>())
+                        if (otherLink.m_myBPLink)
                         {
-                            if (otherLink.m_myBPLink)
-                            {
-                                connectWithLink(link, otherLink, endJoint, false);
-                                //break;
-                            }
+                            connectWithLink(link, otherLink, endJoint, false);
+                            //break;
                         }
                     }
-                    break;
-                case BP_Joint.JointType.Fixed:
-                    break;
+                }
+            }
+            else
+            {
+                switch (endJoint.m_jointType)
+                {
+                    case BP_Joint.JointType.None:
+                        break;
+                    case BP_Joint.JointType.Hinge:
+                        addHingeComponentInLink(link, null, endJoint, false);
+                        break;
+                    case BP_Joint.JointType.Fixed:
+                        addFixComponentInLink(link, null, endJoint, false);
+                        break;
+                }
             }
 
-            #region Start, end joint 모델 생성 코드
-            //  먼저 joint의 위치를 얻기 위해 Blueprint의 Start, end joint의 transform을 가지고 와서 showcase 위치로 변환
-            MyTransform tr_bf_sj = new MyTransform(startJoint.transform.position, startJoint.transform.rotation);
-            MyTransform tr_bf_ej = new MyTransform(endJoint.transform.position, endJoint.transform.rotation);
-            MyTransform tr_startJoint = blueprint2Showcase(tr_bf_sj, tr_bp, tr_sc);
-            MyTransform tr_endJoint = blueprint2Showcase(tr_bf_ej, tr_bp, tr_sc);
+            #region Start, end joint 모델 생성 코드(SlottedBar는 필요 없음)
+            if (link.m_myBPLink.GetComponent<BP_Link>())
+            {
+                //  먼저 joint의 위치를 얻기 위해 Blueprint의 Start, end joint의 transform을 가지고 와서 showcase 위치로 변환
+                MyTransform tr_bf_sj = new MyTransform(startJoint.transform.position, startJoint.transform.rotation);
+                MyTransform tr_bf_ej = new MyTransform(endJoint.transform.position, endJoint.transform.rotation);
+                MyTransform tr_startJoint = blueprint2Showcase(tr_bf_sj, tr_bp, tr_sc);
+                MyTransform tr_endJoint = blueprint2Showcase(tr_bf_ej, tr_bp, tr_sc);
 
-            //  Joint 생성
-            GameObject gObj_startJoint = Instantiate(m_realJoint);
-            GameObject gObj_endJoint = Instantiate(m_realJoint);
-            //  위에서 구한 joint의 위치를 적용
-            gObj_startJoint.transform.position = tr_startJoint.position;
-            gObj_endJoint.transform.position = tr_endJoint.position;
-            //  Joint에 Fixed joint component 추가 후 속한 Link에 connectedBody로 하여 Joint를 부착함
-            FixedJoint fj_sj = gObj_startJoint.AddComponent<FixedJoint>();
-            FixedJoint fj_ej = gObj_endJoint.AddComponent<FixedJoint>();
-            fj_sj.connectedBody = link.GetComponent<Rigidbody>();
-            fj_ej.connectedBody = link.GetComponent<Rigidbody>();
+                //  Joint 생성
+                GameObject gObj_startJoint = Instantiate(m_realJoint);
+                GameObject gObj_endJoint = Instantiate(m_realJoint);
+                //  위에서 구한 joint의 위치를 적용
+                gObj_startJoint.transform.position = tr_startJoint.position;
+                gObj_endJoint.transform.position = tr_endJoint.position;
+                //  Joint에 Fixed joint component 추가 후 속한 Link에 connectedBody로 하여 Joint를 부착함
+                FixedJoint fj_sj = gObj_startJoint.AddComponent<FixedJoint>();
+                FixedJoint fj_ej = gObj_endJoint.AddComponent<FixedJoint>();
+                fj_sj.connectedBody = link.GetComponent<Rigidbody>();
+                fj_ej.connectedBody = link.GetComponent<Rigidbody>();
+
+                //  FixedJoint가 붙은 Joint는 충돌검사를 하면 안된다. 따라서 Collider의 IsTrigger를 활성화 한다.
+                if (startJoint.m_jointType == BP_Joint.JointType.Fixed)
+                    gObj_startJoint.GetComponent<Collider>().isTrigger = true;
+                if (endJoint.m_jointType == BP_Joint.JointType.Fixed)
+                    gObj_endJoint.GetComponent<Collider>().isTrigger = true;
+            }
             #endregion
         }
         #endregion
+    }
+
+    private void connectAllGears()
+    {
+        //  모든 Gear를 불러옴
+        foreach(Gear gear in GameObject.FindObjectsOfType<Gear>())
+        {
+            //  Gear가 parent Object를 가지고 있는 경우(아마 Shaft)
+            if(gear.m_myBPGear.m_parentObj != null)
+            {
+                //  parent와 fixedJoint로 연결
+                //  연결된 오브젝트가 Shaft인 경우
+                if (gear.m_myBPGear.m_parentObj.GetComponent<BP_Shaft>())
+                {
+                    foreach (Shaft shaft in FindObjectsOfType<Shaft>())
+                    {
+                        if (shaft.m_myBPShaft)
+                        {
+                            connectWithShaft(gear, shaft);
+                            //break;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     //  사용 안함
@@ -390,6 +580,8 @@ public class ProductMaker : MonoBehaviour, IButton {
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         m_onShowcase = !m_onShowcase;
+        //  Simulation On이면 렌더링하고, 아니면 렌더링 안함.
+        GameObject.Find("Showcase").GetComponent<MeshRenderer>().enabled = m_onShowcase;
         updownBPObject(m_onShowcase);
         if (m_onShowcase)
         {

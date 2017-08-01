@@ -6,7 +6,7 @@ public class Link : MonoBehaviour {
 
     public Transform[] m_joints = new Transform[2];
 
-    public BP_Link m_myBPLink;
+    public BP_BaseLink m_myBPLink;
     public BP_Joint m_myBPStartJoint;
     public BP_Joint m_myBPEndJoint;
 

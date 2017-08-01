@@ -31,8 +31,10 @@ public class BP_InputManager : MonoBehaviour {
     {
         None = 0,
         Link,
+        SlottedBar,
         GEAR,
         Delete,
+        FixJoint,
         EndEffector
     }
 
@@ -117,6 +119,7 @@ public class BP_InputManager : MonoBehaviour {
                     //  현재 프레임 카메라 방향과 이전 프레임의 것을 비교해 카메라의 움직임을 감지
                     if (Mathf.Abs((m_Camera.forward - m_bfCamDirection).magnitude) > m_constant)
                     {
+                        Vector3 dir, hitPoint;
                         switch (m_currMode)
                         {
                             case EditMode.GEAR:
@@ -125,10 +128,21 @@ public class BP_InputManager : MonoBehaviour {
                                 if (!FindObjectOfType<BP_LinkEditor>().m_isLinking)
                                     break;
                                 //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-                                Vector3 dir = ray.direction;
-                                Vector3 hitPoint = getBlueprintTransformAtPoint(dir).position;
+                                dir = ray.direction;
+                                hitPoint = getBlueprintTransformAtPoint(dir).position;
 
                                 FindObjectOfType<BP_LinkEditor>().getMotion(hitPoint);
+                                break;
+                            case EditMode.SlottedBar:
+                                if (!FindObjectOfType<BP_SlottedBarEditor>().m_isLinking)
+                                    break;
+                                //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+                                dir = ray.direction;
+                                hitPoint = getBlueprintTransformAtPoint(dir).position;
+
+                                FindObjectOfType<BP_SlottedBarEditor>().getMotion(hitPoint);
+                                break;
+                            case EditMode.FixJoint:
                                 break;
                             case EditMode.None:
                                 if (m_clickedObject != null)
@@ -186,7 +200,7 @@ public class BP_InputManager : MonoBehaviour {
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                         break;
                     case EditMode.Link:
-                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>()
+                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_SlottedBar>()
                             || hitObj.GetComponent<Blueprint>())
                         {
                             FindObjectOfType<BP_LinkEditor>().getDownInput(hitObj.gameObject, hitPoint);
@@ -196,6 +210,20 @@ public class BP_InputManager : MonoBehaviour {
                             (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
                             FindObjectOfType<BP_LinkEditor>().m_isLinking = false;
                         }
+                        break;
+                    case EditMode.SlottedBar:
+                        if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_SlottedBar>()
+                            || hitObj.GetComponent<Blueprint>())
+                        {
+                            FindObjectOfType<BP_SlottedBarEditor>().getDownInput(hitObj.gameObject, hitPoint);
+                        }
+                        else if (hitObj.GetComponent(typeof(IButton)))
+                        {
+                            (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
+                            FindObjectOfType<BP_SlottedBarEditor>().m_isLinking = false;
+                        }
+                        break;
+                    case EditMode.FixJoint:
                         break;
                     case EditMode.None:
                         if (hitObj.GetComponent(typeof(IButton)))
@@ -233,6 +261,19 @@ public class BP_InputManager : MonoBehaviour {
                         if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
                         {
                             FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
+                        }
+                        else if (m_clickedObject != null)
+                        {
+                            if (m_clickedObject.CompareTag("Tool"))
+                            {
+                                m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                            }
+                        }
+                        break;
+                    case EditMode.SlottedBar:
+                        if (FindObjectOfType<BP_SlottedBarEditor>().m_isLinking)
+                        {
+                            FindObjectOfType<BP_SlottedBarEditor>().getUpInput(hitPoint);
                         }
                         else if (m_clickedObject != null)
                         {
@@ -282,6 +323,21 @@ public class BP_InputManager : MonoBehaviour {
                             else if (m_clickedObject.CompareTag("Tool"))
                             {
                                 m_clickedObject.GetComponent<IButton>().getUpInput(eaHitPoint);
+                            }
+                        }
+                        break;
+                    case EditMode.FixJoint:
+                        if (m_clickedObject != null)
+                        {
+                            if (m_clickedObject.CompareTag("Tool"))
+                            {
+                                m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                            }
+                            //  FixJoint Mode 상태에서 Joint를 선택하면
+                            else if(m_clickedObject.GetComponent<BP_Joint>())
+                            {
+                                //  허공에 달린(None) Joint에게도 Joint 속성을 부여하면서 Blueprint에 고정시킨다.
+                                m_clickedObject.GetComponent<BP_Joint>().fixOnBlurprint();
                             }
                         }
                         break;

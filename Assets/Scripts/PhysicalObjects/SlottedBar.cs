@@ -2,15 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SlottedBar : MonoBehaviour {
+public class SlottedBar : Link {
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
 }

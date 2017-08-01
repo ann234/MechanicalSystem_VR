@@ -34,6 +34,8 @@ public class BP_Gear : MonoBehaviour, IButton {
     //  자신에게 붙어있는 joint의 리스트
     public List<BP_Joint> m_childJointList = new List<BP_Joint>();
 
+    public GameObject m_parentObj;
+
     //  Gear의 위치 이동 시 초기 위치값 저장
     public Vector3 bf_position;
 
@@ -102,7 +104,7 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
     }
 
-    private void updateBfPosition()
+    public void updateBfPosition()
     {
         bf_position = this.transform.position;
         foreach (BP_Gear gear in m_linkedGearList)
@@ -115,16 +117,7 @@ public class BP_Gear : MonoBehaviour, IButton {
         updateBfPosition();
     }
 
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
-    {
-        updateBfPosition();
-
-        foreach (BP_Joint joint in m_childJointList)
-        {
-            joint.updateAllJointBfPosition();
-        }
-    }
-
+    //  사용 안함
     public void getUpInput(Vector3 hitPoint)
     {
         
@@ -147,6 +140,7 @@ public class BP_Gear : MonoBehaviour, IButton {
         setPosition(tr_BP.position);
         Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
         this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
+
         foreach (BP_Joint joint in m_childJointList)
         {
             //  이 기어에 연결된 joint들의 위치도 같이 변경
@@ -155,6 +149,38 @@ public class BP_Gear : MonoBehaviour, IButton {
         }
 
         //Scaling();  
+    }
+
+    //  BP_Gear와 BP_Shaft가 충돌하는 경우는
+    //  BP_Gear를 움직여 BP_Shaft 위에 놓는것과 같다.
+    //  따라서 BP_Gear를 BP_Shaft에 연결하는 것으로 해석
+    void OnTriggerEnter(Collider col)
+    {
+        if(col.GetComponent<BP_Shaft>())
+        {
+            m_parentObj = col.gameObject;
+            col.GetComponent<BP_Shaft>().m_childObjList.Add(this.gameObject);
+        }
+    }
+
+    //  반대로 Collider가 빠져나온다면 연결을 해제했다는 것으로 해석
+    void OnTriggerExit(Collider col)
+    {
+        if (col.GetComponent<BP_Shaft>())
+        {
+            deleteSelf();
+            col.GetComponent<BP_Shaft>().m_childObjList.Remove(this.gameObject);
+        }
+    }
+
+    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    {
+        updateBfPosition();
+
+        foreach (BP_Joint joint in m_childJointList)
+        {
+            joint.updateAllJointBfPosition();
+        }
     }
 
     public void linking(BP_Gear gear)
@@ -174,5 +200,11 @@ public class BP_Gear : MonoBehaviour, IButton {
         print("BP_Gear: Link successfully");
 
         gear.Scaling();
+    }
+
+    public void deleteSelf()
+    {
+        if (m_parentObj != null)
+            m_parentObj = null;
     }
 }

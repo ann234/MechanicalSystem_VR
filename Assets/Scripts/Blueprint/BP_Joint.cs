@@ -27,8 +27,12 @@ public class BP_Joint : MonoBehaviour, IButton {
 
     //  Joint 위치 이동 시 이전 위치를 백업.
     public Vector3 bf_position;
-    
+
     private bool m_isPositioning = false;
+    public bool IsPositioning
+    {
+        get { return m_isPositioning; }
+    }
 
     public void Initialize(BP_BaseLink myParent, Vector3 pos)
     {
@@ -70,29 +74,24 @@ public class BP_Joint : MonoBehaviour, IButton {
 
         foreach (BP_Joint joint in m_parentLink.m_childJointList)
         {
-            joint.bf_position = joint.transform.position;
-            //  End Effector Joint는 부모 링크가 없는 Joint라서 필요없다.
-            if (!(joint.m_jointType == JointType.EndEffector))
-            {
-                foreach (BP_Joint eaJoint in joint.m_parentLink.m_childJointList)
-                {
-                    eaJoint.bf_position = eaJoint.transform.position;
-                }
-            }
+            joint.updateAllJointBfPosition();
         }
+
+        disableIsPositioning();
     }
 
     public virtual void getDownInput(Vector3 hitPoint)
     {
         //  Joint 위치 이동 전 초기 위치 저장
         updateAllJointBfPosition();
+        m_isPositioning = true;
     }
 
     public virtual void getMotion(Vector3 rayDir, Transform camera)
     {
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
         MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-        
+
         //  Joint의 위치 변경
         this.transform.position = hitTransform.position;
         updateJointPos();
@@ -110,23 +109,16 @@ public class BP_Joint : MonoBehaviour, IButton {
 
         m_isPositioning = true;
         m_parentLink.UpdatePosition();
-        
-        //  연결된 조인트들에서
-        foreach (BP_Joint joint in m_parentLink.m_childJointList)
+    }
+
+    //  지금 이 Joint의 IsPositioning 뿐만이 아닌 부모 링크에 달려있는 자식 Joint들 까지도 전부 false 해줘야 하므로
+    //  따로 만들었다. 그냥 매ㅜㅇ 더러받
+    private void disableIsPositioning()
+    {
+        m_isPositioning = false;
+        foreach(BP_Joint childJoint in m_parentLink.m_childJointList)
         {
-            Vector3 root_pos = (m_parentLink.m_startJoint == this) ? m_parentLink.m_endJoint.transform.position
-            : m_parentLink.m_startJoint.transform.position;
-            float ratio = ((joint.bf_position - root_pos).magnitude) / ((bf_position - root_pos).magnitude);
-
-            joint.transform.position = root_pos + ratio * (this.transform.position - root_pos);
-
-            //joint.transform.position = root_pos + ratio * (new Vector3(this.transform.position.x, this.transform.position.y, 0)
-            //    - new Vector3(root_pos.x, root_pos.y, 0));
-            //joint.transform.position = joint.bf_position + (this.transform.position - bf_position);
-
-            //  연결된 다른 Joint의 Link 또한 연결된 다른 Joint가 있을 것. 그것들 또한 들어가 변경
-            joint.updateJointPos();
-            //joint.m_parentLink.UpdatePosition();
+            childJoint.disableIsPositioning();
         }
     }
 
@@ -148,10 +140,10 @@ public class BP_Joint : MonoBehaviour, IButton {
         if (m_attachedObj != null)
         {
             //  연결되어 있던 오브젝트가 Link인 경우
-            if (m_attachedObj.GetComponent<BP_Link>())
+            if (m_attachedObj.GetComponent<BP_BaseLink>())
             {
                 //  그 Link의 Joint리스트에서 이 Joint를 제거
-                m_attachedObj.GetComponent<BP_Link>().m_childJointList.Remove(this);
+                m_attachedObj.GetComponent<BP_BaseLink>().m_childJointList.Remove(this);
             }
             //  Gear인 경우
             else if (m_attachedObj.GetComponent<BP_Gear>())
@@ -161,41 +153,44 @@ public class BP_Joint : MonoBehaviour, IButton {
             }
         }
 
+        //  Joint type 기본은 None
+        this.setJointType(BP_Joint.JointType.None);
         //  오브젝트 연결을 위해
-        foreach (RaycastHit hit in hits)
+        if (m_parentLink.GetComponent<BP_Link>())
         {
-            Collider _hitObj = hit.collider;
-            //  Gear에 Joint를 연결하는 경우
-            if (_hitObj.GetComponent<BP_Gear>())
+            foreach (RaycastHit hit in hits)
             {
-                print("gear");
-                this.m_attachedObj = _hitObj.gameObject;
-                //  연결한 Gear의 childJointList에 이 Joint를 추가
-                _hitObj.GetComponent<BP_Gear>().m_childJointList.Add(this);
-                setJointType(JointType.Hinge);
-                return;
-            }
-            //  다른 Link에 연결하는 경우
-            else if(_hitObj.GetComponent<BP_Link>() && _hitObj.gameObject != m_parentLink.gameObject)
-            {
-                print("link");
-                this.m_attachedObj = _hitObj.gameObject;
-                //  연결한 링크의 childJointList에 이 Joint를 추가
-                _hitObj.GetComponent<BP_Link>().m_childJointList.Add(this);
-                setJointType(JointType.Hinge);
-                return;
+                Collider _hitObj = hit.collider;
+                connectJointWithObject(_hitObj.gameObject);
             }
         }
-
-        setJointType(JointType.None);
-        this.m_attachedObj = null;
-        return;
     }
 
-    //  사용 안함
-    public void getUpInput(Vector3 hitPoint)
+    //  Joint와 오브젝트(hitObj)를 연결해주는 함수
+    public void connectJointWithObject(GameObject hitObj)
     {
-        
+        //  끝 Joint를 연결한 Gear or Link의 childJointList에 추가
+        if (hitObj.GetComponent<BP_BaseLink>())
+        {
+            if (!(hitObj.GetComponent<BP_BaseLink>() == m_parentLink))
+            {
+                hitObj.GetComponent<BP_BaseLink>().m_childJointList.Add(this);
+                this.setJointType(JointType.Hinge);
+                this.m_attachedObj = hitObj;
+            }
+        }
+        else if (hitObj.GetComponent<BP_Gear>())
+        {
+            hitObj.GetComponent<BP_Gear>().m_childJointList.Add(this);
+            this.setJointType(JointType.Hinge);
+            this.m_attachedObj = hitObj;
+        }
+        else if(hitObj.GetComponent<BP_Shaft>())
+        {
+            hitObj.GetComponent<BP_Shaft>().m_childObjList.Add(this.gameObject);
+            this.setJointType(JointType.Fixed);
+            this.m_attachedObj = hitObj;
+        }
     }
 
     public virtual void deleteSelf()
@@ -203,6 +198,29 @@ public class BP_Joint : MonoBehaviour, IButton {
         if(m_attachedObj != null)
             m_attachedObj = null;
         setJointType(BP_Joint.JointType.None);
+    }
+
+    public void fixOnBlurprint()
+    {
+        //  attachedObj가 없는 경우 = 허공에 매달려 있는 경우
+        if (m_jointType == JointType.None)
+        {
+            setJointType(JointType.Hinge);
+        }
+        else if (m_jointType == JointType.Hinge)
+        {
+            setJointType(JointType.Fixed);
+        }
+        else if (m_jointType == JointType.Fixed)
+        {
+            setJointType(JointType.None);
+        }
+    }
+
+    //  사용 안함
+    public void getUpInput(Vector3 hitPoint)
+    {
+
     }
 
     // Use this for initialization

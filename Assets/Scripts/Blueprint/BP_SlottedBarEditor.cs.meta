@@ -1,10 +1,14 @@
 fileFormatVersion: 2
 guid: e38835cf83a69164aa85c7afc0bd205f
-timeCreated: 1500431242
+timeCreated: 1500446920
 licenseType: Free
 MonoImporter:
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - m_prefab_baseLink: {fileID: 114228996810474800, guid: c3661f5fa001026409765f7bd888a187,
+      type: 2}
+  - m_prefab_joint: {fileID: 114363260132155820, guid: e8b7a001c5da2b447a161db54e29fc90,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 
