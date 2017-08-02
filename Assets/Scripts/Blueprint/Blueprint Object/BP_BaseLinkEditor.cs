@@ -15,8 +15,6 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
     //  현재 만들고 위치 조정중인 Link와 Joint가 속한 blueprint를 임시 저장
     protected Blueprint tmp_blueprint;
 
-    private Vector3 m_startPos;
-
     //  현재 성공적으로 링크 작업을 수행 중인가?
     public bool m_isLinking = false;
 
@@ -42,7 +40,6 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
             Collider eaHitObj = eachHit.collider;
             if (eaHitObj.GetComponent<Blueprint>())
             {
-                m_startPos = eaHitPoint;
                 tmp_blueprint = eaHitObj.GetComponent<Blueprint>();
             }
         }

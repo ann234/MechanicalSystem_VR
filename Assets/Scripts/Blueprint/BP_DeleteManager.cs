@@ -42,6 +42,19 @@ public class BP_DeleteManager : MonoBehaviour {
                 //  BP를 지우니까 실제 Hinge를 지울 리가 없잖아
                 //Destroy(joint.GetComponent<HingeJoint>());
             }
+            
+            //  기어가 부모 오브젝트를 가지고 있었을경우
+            if(target.m_parentObj != null)
+            {
+                GameObject parentObj = target.m_parentObj;
+                //  Shaft였을 경우
+                if(parentObj.GetComponent<BP_Shaft>())
+                {
+                    //  그 Shaft의 자식 리스트에서 이 Gear 오브젝트를 삭제.
+                    parentObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.gameObject);
+                    target.m_parentObj = null;  //  어차피 밑에서 Destroy해서 굳이 안해줘도 되나?
+                }
+            }
 
             //  최종적으로 기어 삭제
             target.removeFromBP();

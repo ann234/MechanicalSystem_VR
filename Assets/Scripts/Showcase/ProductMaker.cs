@@ -7,6 +7,7 @@ using System;
 
 public class ProductMaker : MonoBehaviour, IButton {
 
+    //  물리 오브젝트의 런타임 생성을 위한 Prefab 저장.
     [SerializeField]
     private GameObject m_realGear;
     [SerializeField]
@@ -279,7 +280,10 @@ public class ProductMaker : MonoBehaviour, IButton {
                 obj.transform.position += ratio;
             }
         }
-        FindObjectOfType<BP_Shaft>().transform.position += ratio;
+        foreach(BP_Shaft bp_shaft in FindObjectsOfType<BP_Shaft>())
+        {
+            bp_shaft.transform.position += ratio;
+        }
     }
 
     //  Showcase의 실제 물리 오브젝트 전부 파괴
@@ -435,6 +439,7 @@ public class ProductMaker : MonoBehaviour, IButton {
                     {
                         if (shaft.m_myBPShaft)
                         {
+                            print("connectAllJoints: joint에서 shaft를 찾음");
                             connectWithShaft(link, shaft, startJoint, true);
                             //break;
                         }
@@ -483,6 +488,18 @@ public class ProductMaker : MonoBehaviour, IButton {
             //  end joint도 start joint와 마찬가지로 처리
             if (endJoint.m_attachedObj)
             {
+                //  연결된 오브젝트가 Shaft인 경우
+                if (endJoint.m_attachedObj.GetComponent<BP_Shaft>())
+                {
+                    foreach (Shaft shaft in FindObjectsOfType<Shaft>())
+                    {
+                        if (shaft.m_myBPShaft)
+                        {
+                            connectWithShaft(link, shaft, endJoint, true);
+                            //break;
+                        }
+                    }
+                }
                 if (endJoint.m_attachedObj.GetComponent<BP_Gear>())
                 {
                     foreach (Gear gear in FindObjectsOfType<Gear>())
@@ -594,7 +611,10 @@ public class ProductMaker : MonoBehaviour, IButton {
     {
         m_onShowcase = !m_onShowcase;
         //  Simulation On이면 렌더링하고, 아니면 렌더링 안함.
-        GameObject.Find("Showcase").GetComponent<MeshRenderer>().enabled = m_onShowcase;
+        //GameObject.Find("Showcase").GetComponent<MeshRenderer>().enabled = m_onShowcase;
+
+        //  시뮬레이션을 위해 물리 오브젝트 생성을 할 때는 그에 필요한 얻어오기 위해 inactive된 Blueprint object들을 active
+        //  반대로 시뮬레이션을 끝내고 Blueprint 편집 모드로 돌아갈때는 Blueprint들을 다시 inactive 해준다.
         foreach(Blueprint bp in FindObjectOfType<BlueprintManager>().m_blueprintList)
         {
             foreach(BP_Object obj in bp.m_objectList)
@@ -609,7 +629,13 @@ public class ProductMaker : MonoBehaviour, IButton {
         }
         else
         {
+            //  시뮬레이션이 끝나면 생성한 모든 물리 오브젝트를 제거하고
             destroyAllObjects();
+            //  마지막으로 편집중이었던 blueprint를 active 해준다.
+            foreach (BP_Object obj in FindObjectOfType<BlueprintManager>().CurrentBP.m_objectList)
+            {
+                obj.gameObject.SetActive(!m_onShowcase);
+            }
         }
     }
 
