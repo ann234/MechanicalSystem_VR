@@ -5,7 +5,7 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using System;
 
-public class BP_Joint : MonoBehaviour, IButton {
+public class BP_Joint : BP_Object, IButton {
 
     public enum JointType
     {
@@ -34,7 +34,7 @@ public class BP_Joint : MonoBehaviour, IButton {
         get { return m_isPositioning; }
     }
 
-    public void Initialize(BP_BaseLink myParent, Vector3 pos)
+    public void Initialize(Blueprint myParentBP, BP_BaseLink myParent, Vector3 pos)
     {
         Quaternion rot = Quaternion.Euler(FindObjectOfType<Blueprint>().transform.rotation.eulerAngles
             + new Vector3(90, 0, 0));
@@ -43,6 +43,8 @@ public class BP_Joint : MonoBehaviour, IButton {
         this.transform.rotation = rot;
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
         bf_position = pos;
+
+        addThisToBP(myParentBP);
         m_parentLink = myParent;
     }
 

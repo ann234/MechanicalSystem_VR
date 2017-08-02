@@ -28,6 +28,7 @@ public class BP_DeleteManager : MonoBehaviour {
             }
 
             //  최종적으로 Shaft 삭제
+            target.removeFromBP();
             Destroy(target.gameObject);
         }
         //  지우고자 하는 오브젝트가 Gear인 경우
@@ -43,6 +44,7 @@ public class BP_DeleteManager : MonoBehaviour {
             }
 
             //  최종적으로 기어 삭제
+            target.removeFromBP();
             Destroy(target.gameObject);
         }
         //  Link를 지우려는 경우
@@ -94,10 +96,13 @@ public class BP_DeleteManager : MonoBehaviour {
             }
 
             //  start, end joint 삭제
+            target.m_startJoint.removeFromBP();
             Destroy(target.m_startJoint.gameObject);
+            target.m_endJoint.removeFromBP();
             Destroy(target.m_endJoint.gameObject);
 
             //  최종적으로 Link 삭제
+            target.removeFromBP();
             Destroy(target.gameObject);
         }
     }

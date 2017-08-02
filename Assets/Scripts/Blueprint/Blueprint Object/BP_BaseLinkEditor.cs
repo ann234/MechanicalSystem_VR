@@ -12,6 +12,8 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
 
     //  현재 만들고 위치 조정중인 링크 오브젝트 임시 저장
     protected BP_BaseLink tmp_baseLink;
+    //  현재 만들고 위치 조정중인 Link와 Joint가 속한 blueprint를 임시 저장
+    protected Blueprint tmp_blueprint;
 
     private Vector3 m_startPos;
 
@@ -31,6 +33,7 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
     {
         #region Start, end Joint와 Link 생성 및 위치 설정
         //  클릭 위치 저장. 위치는 실제 클릭된 오브젝트가 아닌 Blueprint위의 위치로 한다.
+        //  검출한 Blueprint는 object의 부모 blueprint(m_parentBP)가 될 것이다.
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
         RaycastHit[] hits = Physics.RaycastAll(ray);
         foreach (RaycastHit eachHit in hits)
@@ -38,20 +41,24 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
             Vector3 eaHitPoint = eachHit.point;
             Collider eaHitObj = eachHit.collider;
             if (eaHitObj.GetComponent<Blueprint>())
-                m_startPos = hitPoint;
+            {
+                m_startPos = eaHitPoint;
+                tmp_blueprint = eaHitObj.GetComponent<Blueprint>();
+            }
         }
 
-        //  링크 생성 후 초기화
+        //  링크 생성 후 초기화 및 부모 blueprint 저장
         tmp_baseLink = Instantiate(m_prefab_baseLink);
+        tmp_baseLink.addThisToBP(tmp_blueprint);
 
         //  시작, 끝 Joint 생성
         tmp_baseLink.m_startJoint = Instantiate(m_prefab_joint);
-        tmp_baseLink.m_startJoint.Initialize(tmp_baseLink, hitPoint);
+        tmp_baseLink.m_startJoint.Initialize(tmp_blueprint, tmp_baseLink, hitPoint);
         //  기본 Joint type은 None으로
         tmp_baseLink.m_startJoint.setJointType(BP_Joint.JointType.None);
 
         tmp_baseLink.m_endJoint = Instantiate(m_prefab_joint);
-        tmp_baseLink.m_endJoint.Initialize(tmp_baseLink, hitPoint);
+        tmp_baseLink.m_endJoint.Initialize(tmp_blueprint, tmp_baseLink, hitPoint);
         #endregion
 
         //  왜 있지?

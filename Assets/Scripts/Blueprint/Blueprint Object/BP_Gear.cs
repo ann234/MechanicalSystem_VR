@@ -4,7 +4,7 @@ using UnityEngine;
 
 using Assets.Scripts.UI;
 
-public class BP_Gear : MonoBehaviour, IButton {
+public class BP_Gear : BP_Object, IButton {
 
     private float m_radius;
     public float m_Radius
@@ -63,6 +63,9 @@ public class BP_Gear : MonoBehaviour, IButton {
         bf_position = this.transform.position;
         Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
         this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
+
+        //  현재 열려있는 Blueprint가 이 Gear가 속한 Blueprint가 될 것이므로 부모 Blueprint로 설정한다.
+        addThisToBP(FindObjectOfType<Blueprint>());
     }
 	
 	// Update is called once per frame

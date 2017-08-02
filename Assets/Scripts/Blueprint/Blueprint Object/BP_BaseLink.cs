@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public abstract class BP_BaseLink : MonoBehaviour
+public abstract class BP_BaseLink : BP_Object
 {
     protected Vector3 m_scale;
 

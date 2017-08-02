@@ -5,10 +5,10 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using System;
 
-public class BP_Shaft : MonoBehaviour, IButton {
+public class BP_Shaft : BP_Object, IButton {
 
     //  자신에게 붙어있는 Object의 리스트
-    public List<GameObject> m_childObjList = new List<GameObject>();
+    public HashSet<GameObject> m_childObjList = new HashSet<GameObject>();
 
     //  Shaft의 위치 이동 시 초기 위치값 저장
     public Vector3 bf_position;

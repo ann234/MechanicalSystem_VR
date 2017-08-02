@@ -47,8 +47,8 @@ public class ProductMaker : MonoBehaviour, IButton {
         makeAllEndEffector(tr_bp, tr_sc);
         makeAllSlottedBar(tr_bp, tr_sc);
 
-        connectAllJoints(tr_bp, tr_sc);
         connectAllGears();
+        connectAllJoints(tr_bp, tr_sc);
     }
 
     private MyTransform blueprint2Showcase(MyTransform tr_origin, MyTransform tr_bp, Transform tr_sc)
@@ -89,14 +89,16 @@ public class ProductMaker : MonoBehaviour, IButton {
                 Transform tr_realShaft = Instantiate(m_realShaft).transform;
                 tr_realShaft.GetComponent<Shaft>().m_myBPShaft = bp_shaft;
                 //print("real gear: " + tr_realGear.position.ToString("F4"));
-                tr_realShaft.position += tr_ret.position;
+                //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+                float additionalDepth = bp_shaft.m_parentBP.Depth;
+                tr_realShaft.position += tr_ret.position + (tr_sc.up * additionalDepth);
 
                 HingeJoint hinge = tr_realShaft.gameObject.AddComponent<HingeJoint>();
                 hinge.anchor = new Vector3(0, 0, 0);
                 hinge.axis = new Vector3(0, 1, 0);
             }
             else
-                print("ProductMaker: Can't find realShaft prefab");
+                print("ProductMaker: Can't find realShaft prefab"); 
         }
     }
 
@@ -116,7 +118,9 @@ public class ProductMaker : MonoBehaviour, IButton {
                 Transform tr_realGear = Instantiate(m_realGear).transform;
                 tr_realGear.GetComponent<Gear>().m_myBPGear = bp_gear;
                 //print("real gear: " + tr_realGear.position.ToString("F4"));
-                tr_realGear.position += tr_ret.position;
+                //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+                float additionalDepth = bp_gear.m_parentBP.Depth;
+                tr_realGear.position += tr_ret.position + (tr_sc.up * additionalDepth);
                 switch (bp_gear.m_gearType)
                 {
                     case GearType.Small:
@@ -160,8 +164,13 @@ public class ProductMaker : MonoBehaviour, IButton {
             (new Vector3(pos_eJoint.x, pos_eJoint.y, pos_eJoint.z) - new Vector3(pos_sJoint.x, pos_sJoint.y, pos_sJoint.z)).normalized);
             
             Link link = Instantiate(m_realLink).GetComponentInChildren<Link>();
-            link.transform.position = pos_ret;// + FindObjectOfType<Showcase>().transform.forward * -0.02f;
+
+            //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+            float additionalDepth = bp_link.m_parentBP.Depth;
+            link.transform.position = pos_ret + (tr_sc.up * additionalDepth);
+            //  Rotation
             link.transform.rotation = Quaternion.Euler(0, 0, rot_ret.eulerAngles.z);
+            //  Scaling
             link.transform.localScale = new Vector3(len, m_realLink.transform.localScale.y,
                 m_realLink.transform.localScale.z);
             //  실제 Link에 Blueprint 정보를 넣어놓자
@@ -183,7 +192,9 @@ public class ProductMaker : MonoBehaviour, IButton {
                     MyTransform tr_ret = blueprint2Showcase(tr_ef, tr_bp, tr_sc);
 
                     Transform endeffector = Instantiate(m_endeffector).transform;
-                    endeffector.position = tr_ret.position + tr_sc.forward * -0.01f;
+                    //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+                    float additionalDepth = bp_joint.m_parentBP.Depth;
+                    endeffector.position = tr_ret.position + (tr_sc.up * additionalDepth);
                     endeffector.SetParent(link.transform);
                     endeffector.transform.localScale = new Vector3(
                         m_endeffector.transform.localScale.x,
@@ -226,7 +237,9 @@ public class ProductMaker : MonoBehaviour, IButton {
             MyTransform tr_center = blueprint2Showcase(tr_bp_center, tr_bp, tr_sc);
 
             Transform slottedBar = Instantiate(m_realSlottedBar).transform;
-            slottedBar.position = tr_center.position;
+            //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+            float additionalDepth = bp_slottedBar.m_parentBP.Depth;
+            slottedBar.position = tr_center.position + (tr_sc.up * additionalDepth);
             slottedBar.rotation = tr_center.rotation;
 
             //  SlottedBar의 Left, Right는 놔두고 Up, DownBlock만 Scaling하기 위해
@@ -259,16 +272,14 @@ public class ProductMaker : MonoBehaviour, IButton {
 
         //  이거 나중에 일일히 type으로 하지 말고 tag로 바꿔서 처리하자
         GameObject.Find("ResultPanel").transform.position += ratio;
-        foreach (BP_Gear gear in FindObjectsOfType<BP_Gear>())
-            gear.transform.position += ratio;
-        foreach (BP_Link link in FindObjectsOfType<BP_Link>())
-            link.transform.position += ratio;
-        foreach (BP_Joint joint in FindObjectsOfType<BP_Joint>())
-            joint.transform.position += ratio;
-        foreach (BP_SlottedBar slottedBar in FindObjectsOfType<BP_SlottedBar>())
-            slottedBar.transform.position += ratio;
-        foreach (BP_Shaft shaft in FindObjectsOfType<BP_Shaft>())
-            shaft.transform.position += ratio;
+        foreach(Blueprint bp in FindObjectOfType<BlueprintManager>().m_blueprintList)
+        {
+            foreach(BP_Object obj in bp.m_objectList)
+            {
+                obj.transform.position += ratio;
+            }
+        }
+        FindObjectOfType<BP_Shaft>().transform.position += ratio;
     }
 
     //  Showcase의 실제 물리 오브젝트 전부 파괴
@@ -523,8 +534,10 @@ public class ProductMaker : MonoBehaviour, IButton {
                 GameObject gObj_startJoint = Instantiate(m_realJoint);
                 GameObject gObj_endJoint = Instantiate(m_realJoint);
                 //  위에서 구한 joint의 위치를 적용
-                gObj_startJoint.transform.position = tr_startJoint.position;
-                gObj_endJoint.transform.position = tr_endJoint.position;
+                //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+                float additionalDepth = link.m_myBPLink.m_parentBP.Depth;
+                gObj_startJoint.transform.position = tr_startJoint.position + (tr_sc.up * additionalDepth);
+                gObj_endJoint.transform.position = tr_endJoint.position + (tr_sc.up * additionalDepth);
                 //  Joint에 Fixed joint component 추가 후 속한 Link에 connectedBody로 하여 Joint를 부착함
                 FixedJoint fj_sj = gObj_startJoint.AddComponent<FixedJoint>();
                 FixedJoint fj_ej = gObj_endJoint.AddComponent<FixedJoint>();
@@ -582,6 +595,13 @@ public class ProductMaker : MonoBehaviour, IButton {
         m_onShowcase = !m_onShowcase;
         //  Simulation On이면 렌더링하고, 아니면 렌더링 안함.
         GameObject.Find("Showcase").GetComponent<MeshRenderer>().enabled = m_onShowcase;
+        foreach(Blueprint bp in FindObjectOfType<BlueprintManager>().m_blueprintList)
+        {
+            foreach(BP_Object obj in bp.m_objectList)
+            {
+                obj.gameObject.SetActive(m_onShowcase);
+            }
+        }
         updownBPObject(m_onShowcase);
         if (m_onShowcase)
         {
