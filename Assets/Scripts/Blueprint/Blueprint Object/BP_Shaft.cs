@@ -7,6 +7,21 @@ using System;
 
 public class BP_Shaft : BP_Object, IButton {
 
+    public enum ShaftType
+    {
+        None = 0,
+        Hinge,
+        Fixed,
+        Rotate
+    }
+
+    //  Shaft type 저장
+    public ShaftType m_shaftType = ShaftType.None;
+
+    //  Shaft type마다 다른 색상으로 렌더링 해주기 위한 materials
+    [SerializeField]
+    private Material[] m_matOfShaftType = new Material[4];
+
     //  자신에게 붙어있는 Object의 리스트
     public HashSet<GameObject> m_childObjList = new HashSet<GameObject>();
 
@@ -24,7 +39,7 @@ public class BP_Shaft : BP_Object, IButton {
     }
 
     public void getMotion(Vector3 rayDir, Transform camera)
-    {
+    { 
         //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
         MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
 
@@ -80,6 +95,30 @@ public class BP_Shaft : BP_Object, IButton {
                     joint.updateAllJointBfPosition();
                 }
             }
+        }
+    }
+
+    public void changeType()
+    {
+        if(m_shaftType == ShaftType.Fixed)
+        {
+            m_shaftType = ShaftType.Hinge;
+            this.GetComponent<Renderer>().material = m_matOfShaftType[2];
+        }
+        else if (m_shaftType == ShaftType.Hinge)
+        {
+            m_shaftType = ShaftType.None;
+            this.GetComponent<Renderer>().material = m_matOfShaftType[3];
+        }
+        else if (m_shaftType == ShaftType.None)
+        {
+            m_shaftType = ShaftType.Rotate;
+            this.GetComponent<Renderer>().material = m_matOfShaftType[0];
+        }
+        else if (m_shaftType == ShaftType.Rotate)
+        {
+            m_shaftType = ShaftType.Fixed;
+            this.GetComponent<Renderer>().material = m_matOfShaftType[1];
         }
     }
 

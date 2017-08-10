@@ -5,6 +5,7 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using System;
 
+[Serializable]
 public class BP_Joint : BP_Object, IButton {
 
     public enum JointType
@@ -153,6 +154,11 @@ public class BP_Joint : BP_Object, IButton {
                 //  그 Gear의 Joint리스트에서 이 Joint를 제거
                 m_attachedObj.GetComponent<BP_Gear>().m_childJointList.Remove(this);
             }
+            else if(m_attachedObj.GetComponent<BP_Shaft>())
+            {
+                m_attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(this.gameObject);
+            }
+            m_attachedObj = null;
         }
 
         //  Joint type 기본은 None
@@ -174,8 +180,19 @@ public class BP_Joint : BP_Object, IButton {
         //  끝 Joint를 연결한 Gear or Link의 childJointList에 추가
         if (hitObj.GetComponent<BP_BaseLink>())
         {
+            //  연결하려는 오브젝트가 자기 부모 Link거나, 부모 Link와 연결되어 있는
+            //  다른 링크이면 updateAllJointBfPosition에서 StackOverflow가 발생한다.
             if (!(hitObj.GetComponent<BP_BaseLink>() == m_parentLink))
             {
+                foreach(BP_Joint childJoint in m_parentLink.m_childJointList)
+                {
+                    BP_BaseLink childLink = childJoint.m_parentLink;
+                    if(childLink == hitObj.GetComponent<BP_BaseLink>())
+                    {
+                        print("부모 Link와 연결되어 있는 다른 링크이면 updateAllJointBfPosition에서 StackOverflow가 발생한다.");
+                        return;
+                    }
+                }
                 hitObj.GetComponent<BP_BaseLink>().m_childJointList.Add(this);
                 this.setJointType(JointType.Hinge);
                 this.m_attachedObj = hitObj;
@@ -227,7 +244,9 @@ public class BP_Joint : BP_Object, IButton {
 
     // Use this for initialization
     void Start () {
-	}
+        m_instanceID = GetInstanceID();
+        m_type = type.Joint;
+    }
 	
 	// Update is called once per frame
 	void Update () {

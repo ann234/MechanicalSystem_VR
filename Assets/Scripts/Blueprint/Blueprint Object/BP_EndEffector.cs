@@ -20,6 +20,7 @@ public class BP_EndEffector : BP_Joint {
             m_attachedObj.GetComponent<BP_Link>().m_childJointList.Remove(this);
         else if (m_attachedObj.GetComponent<BP_Gear>())
             m_attachedObj.GetComponent<BP_Gear>().m_childJointList.Remove(this);
+        m_BPManagerInstance.CurrentBP.m_objectList.Remove(this);
         Destroy(this.gameObject);
     }
 
@@ -32,6 +33,9 @@ public class BP_EndEffector : BP_Joint {
     void Start () {
         bf_position = this.transform.position;
         setJointType(JointType.EndEffector);
+
+        m_parentBP = m_BPManagerInstance.CurrentBP;
+        m_BPManagerInstance.CurrentBP.m_objectList.Add(this);
 	}
 	
 	// Update is called once per frame

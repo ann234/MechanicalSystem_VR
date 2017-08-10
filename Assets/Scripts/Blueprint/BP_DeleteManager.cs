@@ -94,6 +94,10 @@ public class BP_DeleteManager : MonoBehaviour {
                 {
                     attachedObj.GetComponent<BP_Gear>().m_childJointList.Remove(target.m_startJoint);
                 }
+                else if(attachedObj.GetComponent<BP_Shaft>())
+                {
+                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_startJoint.gameObject);
+                }
             }
             if (target.m_endJoint.m_attachedObj)
             {
@@ -105,6 +109,10 @@ public class BP_DeleteManager : MonoBehaviour {
                 else if (attachedObj.GetComponent<BP_Gear>())
                 {
                     attachedObj.GetComponent<BP_Gear>().m_childJointList.Remove(target.m_endJoint);
+                }
+                else if (attachedObj.GetComponent<BP_Shaft>())
+                {
+                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_endJoint.gameObject);
                 }
             }
 

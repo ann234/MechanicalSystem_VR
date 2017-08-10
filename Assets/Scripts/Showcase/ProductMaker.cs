@@ -20,6 +20,8 @@ public class ProductMaker : MonoBehaviour, IButton {
     private EndEffector m_endeffector;
     [SerializeField]
     private Shaft m_realShaft;
+    [SerializeField]
+    private PinFollower m_pinFollower;
 
     private bool m_onShowcase = false;
 
@@ -47,6 +49,7 @@ public class ProductMaker : MonoBehaviour, IButton {
         makeAllLink(tr_bp, tr_sc);
         makeAllEndEffector(tr_bp, tr_sc);
         makeAllSlottedBar(tr_bp, tr_sc);
+        makeAllPinFollwer(tr_bp, tr_sc);
 
         connectAllGears();
         connectAllJoints(tr_bp, tr_sc);
@@ -93,10 +96,27 @@ public class ProductMaker : MonoBehaviour, IButton {
                 //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
                 float additionalDepth = bp_shaft.m_parentBP.Depth;
                 tr_realShaft.position += tr_ret.position + (tr_sc.up * additionalDepth);
-
-                HingeJoint hinge = tr_realShaft.gameObject.AddComponent<HingeJoint>();
-                hinge.anchor = new Vector3(0, 0, 0);
-                hinge.axis = new Vector3(0, 1, 0);
+                
+                switch (bp_shaft.m_shaftType)
+                {
+                    case BP_Shaft.ShaftType.None:
+                        break;
+                    case BP_Shaft.ShaftType.Hinge:
+                        HingeJoint hinge = tr_realShaft.gameObject.AddComponent<HingeJoint>();
+                        hinge.anchor = new Vector3(0, 0, 0);
+                        hinge.axis = new Vector3(0, 1, 0);
+                        break;
+                    case BP_Shaft.ShaftType.Rotate:
+                        HingeJoint hingeInRotate = tr_realShaft.gameObject.AddComponent<HingeJoint>();
+                        hingeInRotate.anchor = new Vector3(0, 0, 0);
+                        hingeInRotate.axis = new Vector3(0, 1, 0);
+                        tr_realShaft.GetComponent<Shaft>().isRotate = true;
+                        break;
+                    case BP_Shaft.ShaftType.Fixed:
+                        FixedJoint fix = tr_realShaft.gameObject.AddComponent<FixedJoint>();
+                        break;
+                }
+                
             }
             else
                 print("ProductMaker: Can't find realShaft prefab"); 
@@ -125,13 +145,13 @@ public class ProductMaker : MonoBehaviour, IButton {
                 switch (bp_gear.m_gearType)
                 {
                     case GearType.Small:
-                        tr_realGear.localScale = new Vector3(0.2f, 0.01f, 0.2f);
+                        tr_realGear.localScale = new Vector3(0.2f, 0.15f, 0.2f);
                         break;
                     case GearType.Medium:
-                        tr_realGear.localScale = new Vector3(0.3f, 0.01f, 0.3f);
+                        tr_realGear.localScale = new Vector3(0.3f, 0.15f, 0.3f);
                         break;
                     case GearType.Large:
-                        tr_realGear.localScale = new Vector3(0.4f, 0.01f, 0.4f);
+                        tr_realGear.localScale = new Vector3(0.4f, 0.15f, 0.4f);
                         break;
                 }
             }
@@ -262,6 +282,31 @@ public class ProductMaker : MonoBehaviour, IButton {
         }
     }
 
+    private void makeAllPinFollwer(MyTransform tr_bp, Transform tr_sc)
+    {
+        foreach (BP_PinFollower bp_pin in FindObjectsOfType<BP_PinFollower>())
+        {
+            MyTransform tr_pin = new MyTransform(bp_pin.transform.position, bp_pin.transform.rotation);
+            //  Blueprint의 inverse transform을 적용해 위치 초기화
+            //  Blueprint 위 Gear들의 위치는 Z축에서 모두 다르다
+            //  이를 해결하기 위해서는 Blueprint의 중심축의 X축을 회전축으로 하여 BP의 X 회전각 만큼 역회전을 시켜주어야 한다
+            MyTransform tr_ret = blueprint2Showcase(tr_pin, tr_bp, tr_sc);
+
+            //  Happy ending
+            if (m_pinFollower)
+            {
+                Transform tr_realpin = Instantiate(m_pinFollower).transform;
+                tr_realpin.GetComponent<PinFollower>().m_myBPPinFollower = bp_pin;
+                //print("real gear: " + tr_realGear.position.ToString("F4"));
+                //  자신이 속한 blueprint(Layer)의 depth만큼 추가적으로 translation 시켜주어야 한다.
+                float additionalDepth = bp_pin.m_parentBP.Depth;
+                tr_realpin.position += tr_ret.position + (tr_sc.up * additionalDepth);
+            }
+            else
+                print("ProductMaker: Can't find PinFollower prefab");
+        }
+    }
+
     //  시뮬레이션 On/Off시 Blueprint위치 변경을 위해
     private void updownBPObject(bool isSimulationOn)
     {
@@ -289,27 +334,39 @@ public class ProductMaker : MonoBehaviour, IButton {
     //  Showcase의 실제 물리 오브젝트 전부 파괴
     private void destroyAllObjects()
     {
-        foreach (Gear gear in FindObjectsOfType<Gear>())
-            Destroy(gear.gameObject);
-        foreach (Link link in FindObjectsOfType<Link>())
-            Destroy(link.gameObject);
-        foreach (SimJoint simJoint in FindObjectsOfType<SimJoint>())
-            Destroy(simJoint.gameObject);
-        foreach (SlottedBar slottedBar in FindObjectsOfType<SlottedBar>())
-            Destroy(slottedBar.gameObject);
-        foreach (Shaft shaft in FindObjectsOfType<Shaft>())
-            Destroy(shaft.gameObject);
+        foreach(GameObject physicsObj in GameObject.FindGameObjectsWithTag("PhysicalObject"))
+        {
+            Destroy(physicsObj);
+        }
+        //foreach (Gear gear in FindObjectsOfType<Gear>())
+        //    Destroy(gear.gameObject);
+        //foreach (Link link in FindObjectsOfType<Link>())
+        //    Destroy(link.gameObject);
+        //foreach (SimJoint simJoint in FindObjectsOfType<SimJoint>())
+        //    Destroy(simJoint.gameObject);
+        //foreach (SlottedBar slottedBar in FindObjectsOfType<SlottedBar>())
+        //    Destroy(slottedBar.gameObject);
+        //foreach (Shaft shaft in FindObjectsOfType<Shaft>())
+        //    Destroy(shaft.gameObject);
     }
 
     //  Link에 HingeJoint Component를 부착할 때 사용
     //  isStart는 Link의 joint가 start인지 end인지 여부
     private void addHingeComponentInLink(Link link, GameObject connectedObj, BP_Joint joint, bool isStart)
     {
+        float anchorLen = 0.5f;
+        //  Slotted bar의 경우에는 anchor 위치를 계산해주어야 함.
+        if(joint.m_parentLink.GetComponent<BP_SlottedBar>())
+        {
+            BP_BaseLink slottedBar = joint.m_parentLink.GetComponent<BP_SlottedBar>();
+            anchorLen = Vector3.Distance(slottedBar.m_startJoint.transform.position,
+                slottedBar.m_endJoint.transform.position) / 2.0f;
+        }
         HingeJoint hinge = link.gameObject.AddComponent<HingeJoint>();
         if (isStart)
-            hinge.anchor = new Vector3(-0.5f, 0, 0);
+            hinge.anchor = new Vector3(-anchorLen, 0, 0);
         else
-            hinge.anchor = new Vector3(0.5f, 0, 0);
+            hinge.anchor = new Vector3(anchorLen, 0, 0);
         hinge.axis = new Vector3(0, 0, 1);
         if(connectedObj != null)
             hinge.connectedBody = connectedObj.GetComponent<Rigidbody>();
@@ -346,12 +403,21 @@ public class ProductMaker : MonoBehaviour, IButton {
                         case BP_Joint.JointType.None:
                             break;
                         case BP_Joint.JointType.Hinge:
-                            addHingeComponentInLink(link, connectedShaft.gameObject, joint, isStart);
+                            //  만약 Shaft의 type이 None이라면, 물리적 오브젝트로써는 없는것으로 간주?
+                            if (connectedShaft.m_myBPShaft.m_shaftType == BP_Shaft.ShaftType.None)
+                                addHingeComponentInLink(link, null, joint, isStart);
+                            else
+                                addHingeComponentInLink(link, connectedShaft.gameObject, joint, isStart);
                             break;
                         case BP_Joint.JointType.Fixed:
-                            addFixComponentInLink(link, connectedShaft.gameObject, joint, isStart);
+                            //  만약 Shaft의 type이 None이라면, 물리적 오브젝트로써는 없는것으로 간주?
+                            if (connectedShaft.m_myBPShaft.m_shaftType == BP_Shaft.ShaftType.None)
+                                addFixComponentInLink(link, null, joint, isStart);
+                            else
+                                addFixComponentInLink(link, connectedShaft.gameObject, joint, isStart);
                             break;
                     }
+                    return;
                 }
             }
         }
@@ -367,7 +433,12 @@ public class ProductMaker : MonoBehaviour, IButton {
                 BP_Gear bp_gear = obj.GetComponent<BP_Gear>();
                 if (gear.m_myBPGear == bp_gear)
                 {
-                    addFixComponentInGear(gear, connectedShaft.gameObject);
+                    //  만약 Shaft의 type이 None이라면, 물리적 오브젝트로써는 없는것으로 간주?
+                    if (connectedShaft.m_myBPShaft.m_shaftType == BP_Shaft.ShaftType.None)
+                        addFixComponentInGear(gear, null);
+                    else
+                        addFixComponentInGear(gear, connectedShaft.gameObject);
+                    return;
                 }
             }
         }
@@ -495,7 +566,7 @@ public class ProductMaker : MonoBehaviour, IButton {
                     {
                         if (shaft.m_myBPShaft)
                         {
-                            connectWithShaft(link, shaft, endJoint, true);
+                            connectWithShaft(link, shaft, endJoint, false);
                             //break;
                         }
                     }

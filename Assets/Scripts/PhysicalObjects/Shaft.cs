@@ -41,9 +41,11 @@ public class Shaft : MonoBehaviour {
             if (rot_current > 360.0f)
                 rot_current = 0;
             if (isLeft)
-                rot_current += 360.0f * Time.deltaTime * m_velocity / m_radius;
+                rot_current += 360.0f * Time.deltaTime * m_velocity;
             else
-                rot_current -= 360.0f * Time.deltaTime * m_velocity / m_radius;
+                rot_current -= 360.0f * Time.deltaTime * m_velocity;
+            //this.transform.localEulerAngles = new Vector3(rot_current, -90, -90);
+            //this.transform.rotation = Quaternion.Euler(rot_current, -90, -90);
             this.transform.eulerAngles = new Vector3(rot_current, -90, -90);
         }
     }

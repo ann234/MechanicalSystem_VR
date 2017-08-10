@@ -160,6 +160,22 @@ public class BP_InputManager : MonoBehaviour {
         }
     }
 
+    void checkInput_Oculus()
+    {
+       //  만약 오브젝트를 집었다면
+
+            //  currMode에 따라 달라지는 행동
+
+
+        //  집었던 오브젝트를 놓았다면
+    }
+
+    void checkMotion_Oculus()
+    {
+        //  만약 Blueprint와 현재 집고 있는 오브젝트의 거리가 충분히 가까울 경우 
+            //  Motion 중으로 판단.
+    }
+
     void checkInput()
     {
         if (Input.GetButtonDown("Fire1"))
@@ -338,6 +354,11 @@ public class BP_InputManager : MonoBehaviour {
                             {
                                 //  허공에 달린(None) Joint에게도 Joint 속성을 부여하면서 Blueprint에 고정시킨다.
                                 m_clickedObject.GetComponent<BP_Joint>().fixOnBlurprint();
+                            }
+                            //  Shaft의 Joint 속성을 바꾸고자 할 때
+                            else if(m_clickedObject.GetComponent<BP_Shaft>())
+                            {
+                                m_clickedObject.GetComponent<BP_Shaft>().changeType();
                             }
                         }
                         break;

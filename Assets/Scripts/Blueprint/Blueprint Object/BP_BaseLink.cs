@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System;
+
+[Serializable]
 public abstract class BP_BaseLink : BP_Object
 {
     protected Vector3 m_scale;

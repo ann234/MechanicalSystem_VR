@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+using System;
+
+[Serializable]
 public class BP_Link : BP_BaseLink {
 
     protected override void UpdateDetails()
@@ -22,7 +25,8 @@ public class BP_Link : BP_BaseLink {
 
     // Use this for initialization
     void Start () {
-        
+        m_instanceID = GetInstanceID();
+        m_type = type.Link;
     }
 	
 	// Update is called once per frame

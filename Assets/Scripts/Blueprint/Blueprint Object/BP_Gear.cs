@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Assets.Scripts.UI;
+using System;
+using System.IO;
 
+[Serializable]
 public class BP_Gear : BP_Object, IButton {
 
     private float m_radius;
@@ -66,6 +69,10 @@ public class BP_Gear : BP_Object, IButton {
 
         //  현재 열려있는 Blueprint가 이 Gear가 속한 Blueprint가 될 것이므로 부모 Blueprint로 설정한다.
         addThisToBP(FindObjectOfType<Blueprint>());
+
+        //  Save Load를 위한 데이터들
+        m_instanceID = GetInstanceID();
+        m_type = type.Gear;
     }
 	
 	// Update is called once per frame
@@ -207,6 +214,7 @@ public class BP_Gear : BP_Object, IButton {
 
     public void deleteSelf()
     {
+
         if (m_parentObj != null)
             m_parentObj = null;
     }

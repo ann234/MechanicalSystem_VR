@@ -31,6 +31,7 @@ public class BP_AddShaftBtn : MonoBehaviour, IButton {
         }
     }
 
+    #region 사용 안함
     //  사용 안함
     public void getMotion(Vector3 rayDir, Transform camera)
     {
@@ -45,6 +46,7 @@ public class BP_AddShaftBtn : MonoBehaviour, IButton {
     public void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
     }
+    #endregion
 
     // Use this for initialization
     void Start () {
