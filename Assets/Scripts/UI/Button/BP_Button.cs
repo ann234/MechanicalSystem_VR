@@ -24,7 +24,8 @@ public abstract class BP_Button : MonoBehaviour, IButton {
     {
     }
 
-    public void getMotion(Vector3 rayDir, Transform camera)
+    //  사용 안함
+    public void getMotion(Vector3 hitPoint)
     {
     }
 

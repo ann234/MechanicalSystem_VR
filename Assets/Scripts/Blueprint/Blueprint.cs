@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class Blueprint : MonoBehaviour {
 
+    public uint indexOfBlueprint;
+
     public List<BP_Object> m_objectList = new List<BP_Object>();
 
     [SerializeField]
@@ -21,7 +23,8 @@ public class Blueprint : MonoBehaviour {
         isTurnOn = OnOrOff;
         foreach (BP_Object obj in m_objectList)
         {
-            obj.gameObject.SetActive(OnOrOff);
+            if(!obj.GetComponent<BP_Shaft>())
+                obj.gameObject.SetActive(OnOrOff);
         }
         gameObject.SetActive(OnOrOff);
     }

@@ -10,8 +10,10 @@ public class BP_TurnLeftGear : MonoBehaviour, IButton {
     public void getDownInput(Vector3 hitPoint)
     {}
 
-    public void getMotion(Vector3 rayDir, Transform camera)
-    {}
+    //  사용 안함
+    public void getMotion(Vector3 hitPoint)
+    {
+    }
 
     public void getUpInput(Vector3 hitPoint)
     {}

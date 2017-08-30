@@ -6,20 +6,19 @@ using Assets.Scripts.UI;
 
 public class BP_GearModeBtn : MonoBehaviour, IButton {
 
-    public void getMotion(Vector3 rayDir, Transform camera)
+    #region 사용 안함
+    public void getMotion(Vector3 hitPoint)
     {
-
-    }
-
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
-    {
-
     }
 
     public void getUpInput(Vector3 hitPoint)
     {
-
     }
+
+    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    {
+    }
+    #endregion
 
     public void getDownInput(Vector3 hitPoint)
     {

@@ -4,6 +4,8 @@ using UnityEngine;
 
 using Assets.Scripts.UI;
 
+using BlockWorld;
+
 public struct MyTransform
 {
     public Vector3 position;
@@ -18,6 +20,19 @@ public struct MyTransform
 
 //  Singleton manager object
 public class BP_InputManager : MonoBehaviour {
+
+    //  VR을 위하여!
+    private RightController rightController;
+    public bool isVRMode
+    {
+        get
+        {
+            if (rightController != null)
+                return true;
+            else
+                return false;
+        }
+    }
 
     public static BP_InputManager m_Instance
     {
@@ -76,6 +91,10 @@ public class BP_InputManager : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
+        if (FindObjectOfType<RightController>())
+            rightController = FindObjectOfType<RightController>();
+        else
+            print("BP_InputManager: Can't find rightController for VR!");
     }
 
     // Update is called once per frame
@@ -105,6 +124,238 @@ public class BP_InputManager : MonoBehaviour {
         return new MyTransform(new Vector3(0, 0, 0), Quaternion.identity);
     }
 
+    public void checkUp_Oculus(GameObject hitObj, Vector3 hitPoint)
+    {
+        //  만약 Oculus로 실행중이라면
+        if(rightController != null)
+        {
+            print("click up");
+            //  currMode에 따라 달라지는 행동
+            switch (m_currMode)
+            {
+                case EditMode.GEAR:
+                    if (hitObj.GetComponent(typeof(IButton)))
+                        (hitObj.GetComponent(typeof(IButton)) as IButton).getUpInput(hitPoint);
+                    break;
+                case EditMode.Link:
+                    if (FindObjectOfType<BP_LinkEditor>().m_isLinking)
+                    {
+                        print("Link editor up");
+                        FindObjectOfType<BP_LinkEditor>().getUpInput(hitPoint);
+                    }
+                    else if (m_clickedObject != null)
+                    {
+                        if (m_clickedObject.CompareTag("Tool"))
+                        {
+                            m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                        }
+                    }
+                    break;
+                case EditMode.SlottedBar:
+                    if (FindObjectOfType<BP_SlottedBarEditor>().m_isLinking)
+                    {
+                        FindObjectOfType<BP_SlottedBarEditor>().getUpInput(hitPoint);
+                    }
+                    else if (m_clickedObject != null)
+                    {
+                        if (m_clickedObject.CompareTag("Tool"))
+                        {
+                            m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                        }
+                    }
+                    break;
+                case EditMode.Delete:
+                    if (m_clickedObject != null)
+                    {
+                        if (m_clickedObject.CompareTag("Tool"))
+                        {
+                            m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                        }
+                        else
+                            GetComponent<BP_DeleteManager>().deleteObject(m_clickedObject);
+                    }
+                    break;
+                //case EditMode.EndEffector:
+                //    RaycastHit[] hits = Physics.RaycastAll(ray);
+
+                //    foreach (RaycastHit eachHit in hits)
+                //    {
+                //        Vector3 eaHitPoint = eachHit.point;
+                //        Collider eaHitObj = eachHit.collider;
+                //        if (eaHitObj.GetComponent<BP_Link>() || eaHitObj.GetComponent<BP_Gear>())
+                //        {
+                //            Transform ef = Instantiate(m_prefab_ef).transform;
+                //            ef.position = eaHitPoint;
+                //            ef.GetComponent<BP_EndEffector>().m_attachedObj = eaHitObj.gameObject;
+                //            if (eaHitObj.GetComponent<BP_Link>())
+                //            {
+                //                eaHitObj.GetComponent<BP_Link>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                //            }
+                //            else if (eaHitObj.GetComponent<BP_Gear>())
+                //            {
+                //                eaHitObj.GetComponent<BP_Gear>().m_childJointList.Add(ef.GetComponent<BP_Joint>());
+                //            }
+                //        }
+                //        else if (eaHitObj.GetComponent<BP_EndEffector>())
+                //        {
+                //            eaHitObj.GetComponent<BP_EndEffector>().offEndEffector();
+                //            break;
+                //        }
+                //        else if (m_clickedObject.CompareTag("Tool"))
+                //        {
+                //            m_clickedObject.GetComponent<IButton>().getUpInput(eaHitPoint);
+                //        }
+                //    }
+                //    break;
+                case EditMode.FixJoint:
+                    if (m_clickedObject != null)
+                    {
+                        if (m_clickedObject.CompareTag("Tool"))
+                        {
+                            m_clickedObject.GetComponent<IButton>().getUpInput(hitPoint);
+                        }
+                        //  FixJoint Mode 상태에서 Joint를 선택하면
+                        else if (m_clickedObject.GetComponent<BP_Joint>())
+                        {
+                            //  허공에 달린(None) Joint에게도 Joint 속성을 부여하면서 Blueprint에 고정시킨다.
+                            m_clickedObject.GetComponent<BP_Joint>().fixOnBlurprint();
+                        }
+                        //  Shaft의 Joint 속성을 바꾸고자 할 때
+                        else if (m_clickedObject.GetComponent<BP_Shaft>())
+                        {
+                            m_clickedObject.GetComponent<BP_Shaft>().changeType();
+                        }
+                    }
+                    break;
+                case EditMode.None:
+                    if (m_clickedObject != null)
+                    {
+                        print("none click up");
+                        if (m_clickedObject.GetComponent(typeof(IButton))
+                            && !m_clickedObject.GetComponent<BP_EndEffector>())
+                        {
+                            if (hitObj)
+                            {
+                                m_clickedObject.GetComponent<IButton>().getUpInput(hitObj.gameObject, hitPoint);
+                            }
+                            else
+                            {
+                                m_clickedObject.GetComponent<IButton>().getUpInput(null, hitPoint);
+                            }
+                        }
+                    }
+                    //hitObj.GetComponent<Blueprint>().getInput(hitPoint);
+                    break;
+            }
+            m_clickedObject = null;
+            m_isButtonDown = false;
+        }
+    }
+
+    public void checkDown_Oculus(GameObject hitObj, Vector3 hitPoint)
+    {
+        //  만약 Oculus로 실행중이라면
+        if (rightController != null)
+        {
+            m_clickedObject = hitObj.gameObject;
+            print("click down");
+            //  currMode에 따라 달라지는 행동
+            switch (m_currMode)
+            {
+                case EditMode.GEAR:
+                    if (hitObj.GetComponent<BP_Gear>())
+                    {
+                        //  부모 삼을 기어를 정한 상태라면
+                        if (m_isLinkingStart)
+                        {   //  두 번째 클릭한 기어를 자식으로 하여 부모에 연결
+                            hitObj.GetComponent<BP_Gear>().linking(m_parentGear);
+                        }
+                        else
+                        {   //  첫 번째 클릭한 기어를 부모로 정함
+                            m_parentGear = hitObj.GetComponent<BP_Gear>();
+                        }
+                        m_isLinkingStart = !m_isLinkingStart;
+                    }
+                    //  State change 버튼을 위해
+                    else if (hitObj.GetComponent(typeof(IButton)))
+                        (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
+                    break;
+                case EditMode.Link:
+                    if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_SlottedBar>()
+                        || hitObj.GetComponent<Blueprint>())
+                    {
+                        print("Link editor down");
+                        FindObjectOfType<BP_LinkEditor>().getDownInput(hitObj.gameObject, hitPoint);
+                    }
+                    else if (hitObj.GetComponent(typeof(IButton)))
+                    {
+                        (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
+                        FindObjectOfType<BP_LinkEditor>().m_isLinking = false;
+                    }
+                    break;
+                case EditMode.SlottedBar:
+                    if (hitObj.GetComponent<BP_Gear>() || hitObj.GetComponent<BP_Link>() || hitObj.GetComponent<BP_SlottedBar>()
+                        || hitObj.GetComponent<Blueprint>())
+                    {
+                        FindObjectOfType<BP_SlottedBarEditor>().getDownInput(hitObj.gameObject, hitPoint);
+                    }
+                    else if (hitObj.GetComponent(typeof(IButton)))
+                    {
+                        (hitObj.GetComponent(typeof(IButton)) as IButton).getDownInput(hitPoint);
+                        FindObjectOfType<BP_SlottedBarEditor>().m_isLinking = false;
+                    }
+                    break;
+                case EditMode.FixJoint:
+                    break;
+                case EditMode.None:
+                    if (hitObj.GetComponent(typeof(IButton)))
+                    {
+                        m_clickedObject.GetComponent<IButton>().getDownInput(hitPoint);
+                    }
+                    break;
+            }
+            m_isButtonDown = true;
+        }
+    }
+
+    public void checkMotion_Oculus(GameObject obj, Vector3 hitPoint)
+    {
+        //  만약 Oculus로 실행중이라면
+        if (rightController != null)
+        {
+            switch (m_currMode)
+            {
+                case EditMode.GEAR:
+                    break;
+                case EditMode.Link:
+                    if (!FindObjectOfType<BP_LinkEditor>().m_isLinking)
+                        break;
+                    //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+
+                    FindObjectOfType<BP_LinkEditor>().getMotion(hitPoint);
+                    break;
+                case EditMode.SlottedBar:
+                    if (!FindObjectOfType<BP_SlottedBarEditor>().m_isLinking)
+                        break;
+                    //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+
+                    FindObjectOfType<BP_SlottedBarEditor>().getMotion(hitPoint);
+                    break;
+                case EditMode.FixJoint:
+                    break;
+                case EditMode.None:
+                    if (m_clickedObject != null)
+                    {
+                        if (m_clickedObject.GetComponent(typeof(IButton)))
+                            m_clickedObject.GetComponent<IButton>().getMotion(hitPoint);
+                    }
+                    break;
+            }
+            m_bfCamDirection = m_Camera.forward;
+            return;
+        }
+    }
+
     void checkMotion()
     {
         Ray ray = new Ray(m_Camera.position, m_Camera.forward);
@@ -120,6 +371,9 @@ public class BP_InputManager : MonoBehaviour {
                     if (Mathf.Abs((m_Camera.forward - m_bfCamDirection).magnitude) > m_constant)
                     {
                         Vector3 dir, hitPoint;
+                        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
+                        dir = ray.direction;
+                        hitPoint = getBlueprintTransformAtPoint(dir).position;
                         switch (m_currMode)
                         {
                             case EditMode.GEAR:
@@ -127,18 +381,12 @@ public class BP_InputManager : MonoBehaviour {
                             case EditMode.Link:
                                 if (!FindObjectOfType<BP_LinkEditor>().m_isLinking)
                                     break;
-                                //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-                                dir = ray.direction;
-                                hitPoint = getBlueprintTransformAtPoint(dir).position;
 
                                 FindObjectOfType<BP_LinkEditor>().getMotion(hitPoint);
                                 break;
                             case EditMode.SlottedBar:
                                 if (!FindObjectOfType<BP_SlottedBarEditor>().m_isLinking)
                                     break;
-                                //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-                                dir = ray.direction;
-                                hitPoint = getBlueprintTransformAtPoint(dir).position;
 
                                 FindObjectOfType<BP_SlottedBarEditor>().getMotion(hitPoint);
                                 break;
@@ -148,7 +396,7 @@ public class BP_InputManager : MonoBehaviour {
                                 if (m_clickedObject != null)
                                 {
                                     if(m_clickedObject.GetComponent(typeof(IButton)))
-                                        m_clickedObject.GetComponent<IButton>().getMotion(ray.direction, m_Camera);
+                                        m_clickedObject.GetComponent<IButton>().getMotion(hitPoint);
                                 }
                                 break;
                         }
@@ -158,22 +406,6 @@ public class BP_InputManager : MonoBehaviour {
                 return;
             }
         }
-    }
-
-    void checkInput_Oculus()
-    {
-       //  만약 오브젝트를 집었다면
-
-            //  currMode에 따라 달라지는 행동
-
-
-        //  집었던 오브젝트를 놓았다면
-    }
-
-    void checkMotion_Oculus()
-    {
-        //  만약 Blueprint와 현재 집고 있는 오브젝트의 거리가 충분히 가까울 경우 
-            //  Motion 중으로 판단.
     }
 
     void checkInput()
@@ -321,7 +553,7 @@ public class BP_InputManager : MonoBehaviour {
                             {
                                 Transform ef = Instantiate(m_prefab_ef).transform;
                                 ef.position = eaHitPoint;
-                                ef.GetComponent<BP_EndEffector>().m_attachedObj = eaHitObj.gameObject;
+                                ef.GetComponent<BP_EndEffector>().m_attachedObj = eaHitObj.GetComponent<BP_Object>();
                                 if (eaHitObj.GetComponent<BP_Link>())
                                 {
                                     eaHitObj.GetComponent<BP_Link>().m_childJointList.Add(ef.GetComponent<BP_Joint>());

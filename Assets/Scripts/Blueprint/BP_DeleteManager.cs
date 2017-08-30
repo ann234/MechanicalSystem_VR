@@ -11,7 +11,7 @@ public class BP_DeleteManager : MonoBehaviour {
         {
             BP_Shaft target = deleteObj.GetComponent<BP_Shaft>();
             //  Shaft에 붙어있는 모든 Object들을 삭제
-            foreach(GameObject obj in target.m_childObjList)
+            foreach(BP_Object obj in target.m_childObjList)
             {
                 //  joint의 경우
                 if(obj.GetComponent<BP_Joint>())
@@ -46,12 +46,12 @@ public class BP_DeleteManager : MonoBehaviour {
             //  기어가 부모 오브젝트를 가지고 있었을경우
             if(target.m_parentObj != null)
             {
-                GameObject parentObj = target.m_parentObj;
+                BP_Object parentObj = target.m_parentObj;
                 //  Shaft였을 경우
                 if(parentObj.GetComponent<BP_Shaft>())
                 {
                     //  그 Shaft의 자식 리스트에서 이 Gear 오브젝트를 삭제.
-                    parentObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.gameObject);
+                    parentObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target);
                     target.m_parentObj = null;  //  어차피 밑에서 Destroy해서 굳이 안해줘도 되나?
                 }
             }
@@ -85,7 +85,7 @@ public class BP_DeleteManager : MonoBehaviour {
             GameObject attachedObj;
             if(target.m_startJoint.m_attachedObj)
             {
-                attachedObj = target.m_startJoint.m_attachedObj;
+                attachedObj = target.m_startJoint.m_attachedObj.gameObject;
                 if (attachedObj.GetComponent<BP_BaseLink>())
                 {
                     attachedObj.GetComponent<BP_BaseLink>().m_childJointList.Remove(target.m_startJoint);
@@ -96,12 +96,12 @@ public class BP_DeleteManager : MonoBehaviour {
                 }
                 else if(attachedObj.GetComponent<BP_Shaft>())
                 {
-                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_startJoint.gameObject);
+                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_startJoint);
                 }
             }
             if (target.m_endJoint.m_attachedObj)
             {
-                attachedObj = target.m_endJoint.m_attachedObj;
+                attachedObj = target.m_endJoint.m_attachedObj.gameObject;
                 if (attachedObj.GetComponent<BP_BaseLink>())
                 {
                     attachedObj.GetComponent<BP_BaseLink>().m_childJointList.Remove(target.m_endJoint);
@@ -112,7 +112,7 @@ public class BP_DeleteManager : MonoBehaviour {
                 }
                 else if (attachedObj.GetComponent<BP_Shaft>())
                 {
-                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_endJoint.gameObject);
+                    attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(target.m_endJoint);
                 }
             }
 

@@ -17,17 +17,13 @@ public class BP_AddPinFollwerBtn : MonoBehaviour, IButton
         {
             Transform newPinFollower = Instantiate(m_BP_PinFollower_prefab).transform;
 
-            //  속한 Blueprint의 정보를 저장
-            newPinFollower.GetComponent<BP_PinFollower>().m_parentBP = m_BPManagerInstance.CurrentBP;
-            //  속한 Blueprint의 Child object list에 이 Pin Follower를 저장
-            m_BPManagerInstance.CurrentBP.m_objectList.Add(newPinFollower.GetComponent<BP_PinFollower>());
             //  최종 위치 지정
             newPinFollower.position = newPinFollower.GetComponent<BP_PinFollower>().m_parentBP.transform.position;
         }
     }
 
     #region 사용 안함
-    public void getMotion(Vector3 rayDir, Transform camera)
+    public void getMotion(Vector3 hitPoint)
     {
     }
 

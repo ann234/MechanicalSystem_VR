@@ -18,15 +18,17 @@ public class BP_Link : BP_BaseLink {
         this.transform.localScale = new Vector3(len, m_scale.y, m_scale.z);
     }
 
-    void Awake()
+    protected virtual void Awake()
     {
+        base.Awake();
         m_scale = this.transform.localScale;
+        m_type = type.Link;
     }
 
     // Use this for initialization
-    void Start () {
+    protected virtual void Start () {
+        base.Start();
         m_instanceID = GetInstanceID();
-        m_type = type.Link;
     }
 	
 	// Update is called once per frame

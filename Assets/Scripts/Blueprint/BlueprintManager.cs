@@ -8,6 +8,17 @@ public class BlueprintManager : MonoBehaviour {
 
     //  존재하는 모든 Blueprint를 저장해두기 위한 List.
     public List<Blueprint> m_blueprintList = new List<Blueprint>();
+    public Blueprint getBlueprintByIndex(uint index)
+    {
+        foreach(Blueprint bp in m_blueprintList)
+        {
+            if (bp.indexOfBlueprint == index)
+                return bp;
+        }
+
+        print("Can't find adjust blueprint. return first blueprint");
+        return m_blueprintList[0];
+    }
 
     //  가장 중앙에 위치한 Blueprint. Shaft때문에 일단 만듬.
     [SerializeField]
@@ -23,6 +34,23 @@ public class BlueprintManager : MonoBehaviour {
     {
         get { return m_currentBP; }
         set { m_currentBP = value; }
+    }
+
+    //  in-active 상태의 Blueprint에 속한 Object들을 in-active 시켜주는 함수
+    public void refresh()
+    {
+        foreach(Blueprint bp in m_blueprintList)
+        {
+            if(bp != CurrentBP)
+            {
+                foreach (BP_Object bp_obj in bp.m_objectList)
+                {
+                    if(!bp_obj.GetComponent<BP_Shaft>())
+                        bp_obj.gameObject.SetActive(false);
+                }
+                    
+            }
+        }
     }
 
     // Use this for initialization

@@ -17,19 +17,21 @@ public class BP_SlottedBar : BP_BaseLink {
         this.transform.localScale = new Vector3(len, m_scale.y, m_scale.z);
     }
 
-    void Awake()
+    protected override void Awake()
     {
         m_scale = this.transform.localScale;
+        m_type = type.SlottedBar;
     }
 
     // Use this for initialization
-    void Start ()
+    protected override void Start ()
     {
-        
+        base.Start();
+        m_instanceID = GetInstanceID();
     }
-	
-	// Update is called once per frame
-	void Update () {
+
+    // Update is called once per frame
+    void Update () {
 		
 	}
 }

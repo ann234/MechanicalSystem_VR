@@ -145,13 +145,13 @@ public class ProductMaker : MonoBehaviour, IButton {
                 switch (bp_gear.m_gearType)
                 {
                     case GearType.Small:
-                        tr_realGear.localScale = new Vector3(0.2f, 0.15f, 0.2f);
+                        tr_realGear.localScale = tr_realGear.GetComponent<Gear>().Scale;
                         break;
                     case GearType.Medium:
-                        tr_realGear.localScale = new Vector3(0.3f, 0.15f, 0.3f);
+                        tr_realGear.localScale = tr_realGear.GetComponent<Gear>().Scale;
                         break;
                     case GearType.Large:
-                        tr_realGear.localScale = new Vector3(0.4f, 0.15f, 0.4f);
+                        tr_realGear.localScale = tr_realGear.GetComponent<Gear>().Scale;
                         break;
                 }
             }
@@ -325,10 +325,10 @@ public class ProductMaker : MonoBehaviour, IButton {
                 obj.transform.position += ratio;
             }
         }
-        foreach(BP_Shaft bp_shaft in FindObjectsOfType<BP_Shaft>())
-        {
-            bp_shaft.transform.position += ratio;
-        }
+        //foreach(BP_Shaft bp_shaft in FindObjectsOfType<BP_Shaft>())
+        //{
+        //    bp_shaft.transform.position += ratio;
+        //}
     }
 
     //  Showcase의 실제 물리 오브젝트 전부 파괴
@@ -391,7 +391,7 @@ public class ProductMaker : MonoBehaviour, IButton {
     //  Shaft와 Joint를 연결해주는 함수
     private void connectWithShaft(Link link, Shaft connectedShaft, BP_Joint joint, bool isStart)
     {
-        foreach (GameObject obj in connectedShaft.m_myBPShaft.m_childObjList)
+        foreach (BP_Object obj in connectedShaft.m_myBPShaft.m_childObjList)
         {
             if(obj.GetComponent<BP_Joint>())
             {
@@ -426,7 +426,7 @@ public class ProductMaker : MonoBehaviour, IButton {
     //  Shaft와 Gear를 연결해주는 함수
     private void connectWithShaft(Gear gear, Shaft connectedShaft)
     {
-        foreach (GameObject obj in connectedShaft.m_myBPShaft.m_childObjList)
+        foreach (BP_Object obj in connectedShaft.m_myBPShaft.m_childObjList)
         {
             if (obj.GetComponent<BP_Gear>())
             {
@@ -688,30 +688,25 @@ public class ProductMaker : MonoBehaviour, IButton {
         //  반대로 시뮬레이션을 끝내고 Blueprint 편집 모드로 돌아갈때는 Blueprint들을 다시 inactive 해준다.
         foreach(Blueprint bp in FindObjectOfType<BlueprintManager>().m_blueprintList)
         {
-            foreach(BP_Object obj in bp.m_objectList)
-            {
-                obj.gameObject.SetActive(m_onShowcase);
-            }
+            bp.turnOnOff(m_onShowcase);
         }
         updownBPObject(m_onShowcase);
         if (m_onShowcase)
         {
+            //FindObjectOfType<BP_SaveLoadManager>().saveAll();
             MakeAllProduct();
         }
         else
         {
             //  시뮬레이션이 끝나면 생성한 모든 물리 오브젝트를 제거하고
             destroyAllObjects();
-            //  마지막으로 편집중이었던 blueprint를 active 해준다.
-            foreach (BP_Object obj in FindObjectOfType<BlueprintManager>().CurrentBP.m_objectList)
-            {
-                obj.gameObject.SetActive(!m_onShowcase);
-            }
+            //  마지막으로 편집중이었던 blueprint를 active 해준다
+            FindObjectOfType<BlueprintManager>().CurrentBP.turnOnOff(true);
         }
     }
 
     //  사용 안함
-    public void getMotion(Vector3 rayDir, Transform camera)
+    public void getMotion(Vector3 hitPoint)
     {
     }
 }

@@ -23,7 +23,7 @@ public class BP_Shaft : BP_Object, IButton {
     private Material[] m_matOfShaftType = new Material[4];
 
     //  자신에게 붙어있는 Object의 리스트
-    public HashSet<GameObject> m_childObjList = new HashSet<GameObject>();
+    public HashSet<BP_Object> m_childObjList = new HashSet<BP_Object>();
 
     //  Shaft의 위치 이동 시 초기 위치값 저장
     public Vector3 bf_position;
@@ -33,21 +33,18 @@ public class BP_Shaft : BP_Object, IButton {
         bf_position = this.transform.position;
     }
 
-    public void getDownInput(Vector3 hitPoint)
+    public override void getDownInput(Vector3 hitPoint)
     {
         updateBfPosition();
     }
 
-    public void getMotion(Vector3 rayDir, Transform camera)
-    { 
-        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-
+    public override void getMotion(Vector3 hitPoint)
+    {
         //  Shaft의 위치 변경
-        this.transform.position = hitTransform.position;
+        this.transform.position = hitPoint;
 
         //  붙어있는 childJoint들도 함께 이동
-        foreach (GameObject child in m_childObjList)
+        foreach (BP_Object child in m_childObjList)
         {
             //  Joint의 경우
             if(child.GetComponent<BP_Joint>())
@@ -73,14 +70,14 @@ public class BP_Shaft : BP_Object, IButton {
     }
 
     //  사용 안함
-    public void getUpInput(Vector3 hitPoint)
+    public override void getUpInput(Vector3 hitPoint)
     {}
 
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    public override void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         updateBfPosition();
 
-        foreach (GameObject obj in m_childObjList)
+        foreach (BP_Object obj in m_childObjList)
         {
             if(obj.GetComponent<BP_Joint>())
             {
@@ -123,9 +120,13 @@ public class BP_Shaft : BP_Object, IButton {
     }
 
     // Use this for initialization
-    void Start () {
-		
-	}
+    protected override void Start () {
+        base.Start();
+
+        //  Save Load를 위한 데이터들
+        m_instanceID = GetInstanceID();
+        m_type = type.Shaft;
+    }
 	
 	// Update is called once per frame
 	void Update () {

@@ -5,6 +5,8 @@ using UnityEngine;
 using Assets.Scripts.UI;
 using System;
 
+using BlockWorld;
+
 [Serializable]
 public class BP_Joint : BP_Object, IButton {
 
@@ -24,7 +26,7 @@ public class BP_Joint : BP_Object, IButton {
     public BP_BaseLink m_parentLink;
 
     //  Joint로 묶인 오브젝트
-    public GameObject m_attachedObj;
+    public BP_Object m_attachedObj;
 
     //  Joint 위치 이동 시 이전 위치를 백업.
     public Vector3 bf_position;
@@ -83,20 +85,17 @@ public class BP_Joint : BP_Object, IButton {
         disableIsPositioning();
     }
 
-    public virtual void getDownInput(Vector3 hitPoint)
+    public override void getDownInput(Vector3 hitPoint)
     {
         //  Joint 위치 이동 전 초기 위치 저장
         updateAllJointBfPosition();
         m_isPositioning = true;
     }
 
-    public virtual void getMotion(Vector3 rayDir, Transform camera)
+    public override void getMotion(Vector3 hitPoint)
     {
-        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-
         //  Joint의 위치 변경
-        this.transform.position = hitTransform.position;
+        this.transform.position = hitPoint;
         updateJointPos();
     }
 
@@ -125,19 +124,36 @@ public class BP_Joint : BP_Object, IButton {
         }
     }
 
-    public virtual void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    public override void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         //코드개더럽
 
         //  Joint 위치 이동 끝났으니 초기 위치 다시 저장
         updateAllJointBfPosition();
 
-        //  메인 카메라 위치
-        Transform camera = Camera.main.transform;
-        RaycastHit[] hits;
-        hits = Physics.RaycastAll(camera.position, camera.forward);
+        List<GameObject> hits = new List<GameObject>();
 
-        if (hits.Length <= 0)
+        //  Controller를 이용하는 Oculus의 경우
+        if (FindObjectOfType<BlockWorld.RightController>())
+        {
+            //  Controller와 충돌한 모든 GameObject를 저장
+            RightController rightController = FindObjectOfType<RightController>();
+            foreach (GameObject hit in rightController.TriggerList)
+                hits.Add(hit);
+        }
+        //  시점을 이용한 VR의 경우
+        else
+        {
+            //  시점과 casting 된 모든 GameObject를 가져옴
+            Transform camera = Camera.main.transform;
+            RaycastHit[] rayHits;
+            rayHits = Physics.RaycastAll(camera.position, camera.forward);
+            foreach (RaycastHit hit in rayHits)
+                hits.Add(hit.collider.gameObject);
+        }    
+
+        //  검출된 오브젝트가 하나도 없는경우 연결할 오브젝트가 없다는 뜻이므로 끝낸다.
+        if (hits.Count <= 0)
             return;
 
         if (m_attachedObj != null)
@@ -156,7 +172,7 @@ public class BP_Joint : BP_Object, IButton {
             }
             else if(m_attachedObj.GetComponent<BP_Shaft>())
             {
-                m_attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(this.gameObject);
+                m_attachedObj.GetComponent<BP_Shaft>().m_childObjList.Remove(this);
             }
             m_attachedObj = null;
         }
@@ -166,10 +182,9 @@ public class BP_Joint : BP_Object, IButton {
         //  오브젝트 연결을 위해
         if (m_parentLink.GetComponent<BP_Link>())
         {
-            foreach (RaycastHit hit in hits)
+            foreach (GameObject hit in hits)
             {
-                Collider _hitObj = hit.collider;
-                connectJointWithObject(_hitObj.gameObject);
+                connectJointWithObject(hit);
             }
         }
     }
@@ -195,20 +210,20 @@ public class BP_Joint : BP_Object, IButton {
                 }
                 hitObj.GetComponent<BP_BaseLink>().m_childJointList.Add(this);
                 this.setJointType(JointType.Hinge);
-                this.m_attachedObj = hitObj;
+                this.m_attachedObj = hitObj.GetComponent<BP_Object>();
             }
         }
         else if (hitObj.GetComponent<BP_Gear>())
         {
             hitObj.GetComponent<BP_Gear>().m_childJointList.Add(this);
             this.setJointType(JointType.Hinge);
-            this.m_attachedObj = hitObj;
+            this.m_attachedObj = hitObj.GetComponent<BP_Object>();
         }
         else if(hitObj.GetComponent<BP_Shaft>())
         {
-            hitObj.GetComponent<BP_Shaft>().m_childObjList.Add(this.gameObject);
+            hitObj.GetComponent<BP_Shaft>().m_childObjList.Add(this);
             this.setJointType(JointType.Fixed);
-            this.m_attachedObj = hitObj;
+            this.m_attachedObj = hitObj.GetComponent<BP_Object>();
         }
     }
 
@@ -237,15 +252,23 @@ public class BP_Joint : BP_Object, IButton {
     }
 
     //  사용 안함
-    public void getUpInput(Vector3 hitPoint)
+    public override void getUpInput(Vector3 hitPoint)
     {
 
     }
 
-    // Use this for initialization
-    void Start () {
-        m_instanceID = GetInstanceID();
+    protected override void Awake()
+    {
+        base.Awake();
+
+        //  Save Load를 위한 데이터들
         m_type = type.Joint;
+    }
+
+    // Use this for initialization
+    protected override void Start () {
+        base.Start();
+        m_instanceID = GetInstanceID();
     }
 	
 	// Update is called once per frame

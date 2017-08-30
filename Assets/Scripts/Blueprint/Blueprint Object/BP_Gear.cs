@@ -7,7 +7,7 @@ using System;
 using System.IO;
 
 [Serializable]
-public class BP_Gear : BP_Object, IButton {
+public class BP_Gear : BP_Object {
 
     private float m_radius;
     public float m_Radius
@@ -37,7 +37,7 @@ public class BP_Gear : BP_Object, IButton {
     //  자신에게 붙어있는 joint의 리스트
     public List<BP_Joint> m_childJointList = new List<BP_Joint>();
 
-    public GameObject m_parentObj;
+    public BP_Object m_parentObj;
 
     //  Gear의 위치 이동 시 초기 위치값 저장
     public Vector3 bf_position;
@@ -53,8 +53,16 @@ public class BP_Gear : BP_Object, IButton {
     //  Menu UI가 열렸나 안열렸나
     private bool m_isMenuOpen = false;
 
+    protected override void Awake()
+    {
+        base.Awake();
+        m_type = type.Gear;
+    }
+
     // Use this for initialization
-    void Start () {
+    protected override void Start () {
+        base.Start();
+
         //  가지고 있는 ItemOption UI 게임오브젝트 저장
         if(m_itemOption)
         {
@@ -67,12 +75,8 @@ public class BP_Gear : BP_Object, IButton {
         Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
         this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
 
-        //  현재 열려있는 Blueprint가 이 Gear가 속한 Blueprint가 될 것이므로 부모 Blueprint로 설정한다.
-        addThisToBP(FindObjectOfType<Blueprint>());
-
         //  Save Load를 위한 데이터들
         m_instanceID = GetInstanceID();
-        m_type = type.Gear;
     }
 	
 	// Update is called once per frame
@@ -122,32 +126,23 @@ public class BP_Gear : BP_Object, IButton {
             gear.updateBfPosition();
         }
     }
-    public void getDownInput(Vector3 hitPoint)
+    public override void getDownInput(Vector3 hitPoint)
     {
         updateBfPosition();
     }
 
     //  사용 안함
-    public void getUpInput(Vector3 hitPoint)
+    public override void getUpInput(Vector3 hitPoint)
     {
         
     }
-
-    public void getMotion(Vector3 rayDir, Transform camera)
+    
+    public override void getMotion(Vector3 hitPoint)
     {
         if (m_isConnected)
             return;
-        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        MyTransform tr_BP = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-        //Vector3 dir = rayDir;
-        //Vector3 BP_pos = FindObjectOfType<Blueprint>().transform.position
-        //    + new Vector3(0, 0, -0.01f);
 
-        //float ret_x = (dir.x * (BP_pos.z -camera.position.z) / dir.z) + camera.position.x;
-        //float ret_y = (dir.y * (BP_pos.z - camera.position.z) / dir.z) + camera.position.y;
-        //Vector3 ret = new Vector3(ret_x, ret_y, BP_pos.z);
-
-        setPosition(tr_BP.position);
+        setPosition(hitPoint);
         Vector3 retRot = FindObjectOfType<Blueprint>().transform.rotation.eulerAngles;
         this.transform.rotation = Quaternion.Euler(retRot.x - 90, retRot.y, retRot.z);
 
@@ -161,16 +156,21 @@ public class BP_Gear : BP_Object, IButton {
         //Scaling();  
     }
 
+    public void parenting(GameObject parentObj)
+    {
+        if (parentObj.GetComponent<BP_Shaft>())
+        {
+            m_parentObj = parentObj.GetComponent<BP_Object>();
+            parentObj.GetComponent<BP_Shaft>().m_childObjList.Add(this);
+        }
+    }
+
     //  BP_Gear와 BP_Shaft가 충돌하는 경우는
     //  BP_Gear를 움직여 BP_Shaft 위에 놓는것과 같다.
     //  따라서 BP_Gear를 BP_Shaft에 연결하는 것으로 해석
     void OnTriggerEnter(Collider col)
     {
-        if(col.GetComponent<BP_Shaft>())
-        {
-            m_parentObj = col.gameObject;
-            col.GetComponent<BP_Shaft>().m_childObjList.Add(this.gameObject);
-        }
+        parenting(col.gameObject);
     }
 
     //  반대로 Collider가 빠져나온다면 연결을 해제했다는 것으로 해석
@@ -179,11 +179,11 @@ public class BP_Gear : BP_Object, IButton {
         if (col.GetComponent<BP_Shaft>())
         {
             deleteSelf();
-            col.GetComponent<BP_Shaft>().m_childObjList.Remove(this.gameObject);
+            col.GetComponent<BP_Shaft>().m_childObjList.Remove(this);
         }
     }
 
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    public override void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         updateBfPosition();
 

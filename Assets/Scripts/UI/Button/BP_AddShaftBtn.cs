@@ -33,7 +33,7 @@ public class BP_AddShaftBtn : MonoBehaviour, IButton {
 
     #region 사용 안함
     //  사용 안함
-    public void getMotion(Vector3 rayDir, Transform camera)
+    public void getMotion(Vector3 hitPoint)
     {
     }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 using Assets.Scripts.UI;
+using BlockWorld;
 
 public class BP_BaseLinkEditor : MonoBehaviour, IButton {
     //  link prefab
@@ -14,6 +15,8 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
     protected BP_BaseLink tmp_baseLink;
     //  현재 만들고 위치 조정중인 Link와 Joint가 속한 blueprint를 임시 저장
     protected Blueprint tmp_blueprint;
+
+    BP_InputManager im;
 
     //  현재 성공적으로 링크 작업을 수행 중인가?
     public bool m_isLinking = false;
@@ -60,16 +63,24 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
 
         //  왜 있지?
         //tmp_baseLink.UpdatePosition();
+        if (im.isVRMode)
+        {
+            FindObjectOfType<RightController>().GrabbedObject = tmp_baseLink.m_endJoint.gameObject;
+            tmp_baseLink.m_endJoint.GetComponent<Grabbable>().isGrabbed = true;
+        }
 
         m_isLinking = true;
     }
 
     public void getMotion(Vector3 hitPoint)
     {
-        tmp_baseLink.m_endJoint.transform.position = hitPoint;
-
+        if(!im.isVRMode)
+        {
+            tmp_baseLink.m_endJoint.transform.position = hitPoint;
+        }
         //  이거 안해주면 Joint 위치 이동 시 초기값이 없어서 큰일ㅇ남참트루
-        tmp_baseLink.m_endJoint.bf_position = hitPoint;
+        tmp_baseLink.m_endJoint.bf_position 
+            = tmp_baseLink.m_endJoint.transform.position;
 
         //  Link 위치 계속해서 업데이트
         tmp_baseLink.UpdatePosition();
@@ -83,9 +94,12 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
 
     public virtual void getUpInput(Vector3 hitPoint)
     {
-        //  End joint의 위치를 현재 시선 위치로 최종 옮김
-        setJointPositionToBlueprint(tmp_baseLink.m_endJoint);
-
+        //  VR이 아닌 경우
+        if (!im.isVRMode)
+        {
+            //  End joint의 위치를 현재 시선 위치로 최종 옮김
+            setJointPositionToBlueprint(tmp_baseLink.m_endJoint);
+        }
         getUpInputDetails();
 
         //  최종 초기화
@@ -122,7 +136,7 @@ public class BP_BaseLinkEditor : MonoBehaviour, IButton {
     // Use this for initialization
     void Start()
     {
-
+        im = FindObjectOfType<BP_InputManager>();
     }
 
     // Update is called once per frame

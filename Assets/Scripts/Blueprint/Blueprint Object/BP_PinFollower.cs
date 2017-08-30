@@ -14,18 +14,15 @@ public class BP_PinFollower : BP_Object, IButton {
         bf_position = this.transform.position;
     }
 
-    public void getDownInput(Vector3 hitPoint)
+    public override void getDownInput(Vector3 hitPoint)
     {
         updateBfPosition();
     }
 
-    public void getMotion(Vector3 rayDir, Transform camera)
+    public override void getMotion(Vector3 hitPoint)
     {
-        //  시점에서 Blueprint로 raycasting시 Blurprint 위의 (x, y, 0)점 구하기
-        MyTransform hitTransform = FindObjectOfType<BP_InputManager>().getBlueprintTransformAtPoint(rayDir);
-
         //  Shaft의 위치 변경
-        this.transform.position = hitTransform.position;
+        this.transform.position = hitPoint;
     }
 
     //  사용 안함
@@ -33,13 +30,13 @@ public class BP_PinFollower : BP_Object, IButton {
     {
     }
 
-    public void getUpInput(GameObject hitObj, Vector3 hitPoint)
+    public override void getUpInput(GameObject hitObj, Vector3 hitPoint)
     {
         updateBfPosition();
     }
 
     // Use this for initialization
-    void Start () {
+    protected override void Start () {
 		
 	}
 	
